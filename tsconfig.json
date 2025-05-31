@@ -12,7 +12,8 @@
       "@utils/*": ["src/app/utils/*"],
       "@pages/*": ["src/app/pages/*"],
       "@shared/*": ["src/app/shared/*"],
-      "@environments/*": ["src/environments/*"]
+      "@environments/*": ["src/environments/*"],
+      "@pipes/*": ["./src/app/pipes/*"]
     },
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
