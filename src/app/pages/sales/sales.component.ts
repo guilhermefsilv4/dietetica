@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
 import { CurrencyArPipe } from '@pipes/currency-ar.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 interface SaleItem {
   productId: string;
@@ -24,7 +26,7 @@ interface Sale {
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyArPipe],
+  imports: [CommonModule, FormsModule, CurrencyArPipe, FontAwesomeModule],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de nova venda -->
@@ -124,7 +126,7 @@ interface Sale {
                         (click)="removeItem(item.productId)"
                         class="text-red-600 hover:text-red-900"
                       >
-                        Eliminar
+                        <fa-icon [icon]="faTrash"></fa-icon>
                       </button>
                     </td>
                   </tr>
@@ -221,6 +223,9 @@ interface Sale {
   styles: ``
 })
 export class SalesComponent {
+  // Ícones
+  faTrash = faTrash;
+
   // Estado do componente
   isNewSale = signal(false);
   selectedProductId = '';

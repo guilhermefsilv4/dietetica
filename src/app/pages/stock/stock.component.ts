@@ -5,11 +5,13 @@ import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 import { Product } from '@interfaces/product.interface';
 import { StockMovement, StockMovementType } from '@interfaces/stock-movement.interface';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Filtros -->
@@ -75,19 +77,19 @@ import { StockMovement, StockMovementType } from '@interfaces/stock-movement.int
                     (click)="openMovementModal(product, 'entrada')"
                     class="text-green-600 hover:text-green-900 mr-4"
                   >
-                    Entrada
+                    <fa-icon [icon]="faArrowUp"></fa-icon>
                   </button>
                   <button
                     (click)="openMovementModal(product, 'salida')"
                     class="text-red-600 hover:text-red-900 mr-4"
                   >
-                    Salida
+                    <fa-icon [icon]="faArrowDown"></fa-icon>
                   </button>
                   <button
                     (click)="openMovementModal(product, 'ajuste')"
                     class="text-yellow-600 hover:text-yellow-900"
                   >
-                    Ajuste
+                    <fa-icon [icon]="faSliders"></fa-icon>
                   </button>
                 </td>
               </tr>
@@ -152,6 +154,11 @@ import { StockMovement, StockMovementType } from '@interfaces/stock-movement.int
   styles: ``
 })
 export class StockComponent {
+  // Ícones
+  faArrowUp = faArrowUp;
+  faArrowDown = faArrowDown;
+  faSliders = faSliders;
+
   // Estado do componente
   searchTerm = signal('');
   selectedCategory = signal('');

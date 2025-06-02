@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -88,13 +90,13 @@ import { Product } from '@interfaces/product.interface';
                     (click)="openProductModal(product)"
                     class="text-blue-600 hover:text-blue-900 mr-4"
                   >
-                    Editar
+                    <fa-icon [icon]="faEdit"></fa-icon>
                   </button>
                   <button
                     (click)="deleteProduct(product)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Eliminar
+                    <fa-icon [icon]="faTrash"></fa-icon>
                   </button>
                 </td>
               </tr>
@@ -206,6 +208,10 @@ import { Product } from '@interfaces/product.interface';
   styles: ``
 })
 export class ProductsComponent {
+  // Ícones
+  faEdit = faEdit;
+  faTrash = faTrash;
+
   // Estado do componente
   searchTerm = signal('');
   selectedCategory = signal('');

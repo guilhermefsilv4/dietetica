@@ -1,23 +1,14 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  document: string;
-  createdAt: Date;
-  totalPurchases: number;
-  lastPurchaseDate?: Date;
-}
+import { Customer } from '@interfaces/customer.interface';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -83,13 +74,13 @@ interface Customer {
                     (click)="openCustomerModal(customer)"
                     class="text-blue-600 hover:text-blue-900 mr-4"
                   >
-                    Editar
+                    <fa-icon [icon]="faEdit"></fa-icon>
                   </button>
                   <button
                     (click)="deleteCustomer(customer)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Eliminar
+                    <fa-icon [icon]="faTrash"></fa-icon>
                   </button>
                 </td>
               </tr>
@@ -180,6 +171,10 @@ interface Customer {
   styles: ``
 })
 export class CustomersComponent {
+  // Ícones
+  faEdit = faEdit;
+  faTrash = faTrash;
+
   // Estado do componente
   searchTerm = signal('');
   showModal = signal(false);
