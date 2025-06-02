@@ -7,11 +7,12 @@ import { Product } from '@interfaces/product.interface';
 import { StockMovement, StockMovementType } from '@interfaces/stock-movement.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-icons';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Filtros -->
@@ -68,29 +69,37 @@ import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-i
                   {{ product.category }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span [class]="getStockClass(product.stock)">
-                    {{ product.stock }}
-                  </span>
+                  <app-tooltip [text]="getStockTooltip(product.stock)">
+                    <span [class]="getStockClass(product.stock)">
+                      {{ product.stock }}
+                    </span>
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    (click)="openMovementModal(product, 'entrada')"
-                    class="text-green-600 hover:text-green-900 mr-4"
-                  >
-                    <fa-icon [icon]="faArrowUp"></fa-icon>
-                  </button>
-                  <button
-                    (click)="openMovementModal(product, 'salida')"
-                    class="text-red-600 hover:text-red-900 mr-4"
-                  >
-                    <fa-icon [icon]="faArrowDown"></fa-icon>
-                  </button>
-                  <button
-                    (click)="openMovementModal(product, 'ajuste')"
-                    class="text-yellow-600 hover:text-yellow-900"
-                  >
-                    <fa-icon [icon]="faSliders"></fa-icon>
-                  </button>
+                  <app-tooltip text="Registrar entrada de stock">
+                    <button
+                      (click)="openMovementModal(product, 'entrada')"
+                      class="text-green-600 hover:text-green-900 mr-4"
+                    >
+                      <fa-icon [icon]="faArrowUp"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Registrar salida de stock">
+                    <button
+                      (click)="openMovementModal(product, 'salida')"
+                      class="text-red-600 hover:text-red-900 mr-4"
+                    >
+                      <fa-icon [icon]="faArrowDown"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Ajustar stock">
+                    <button
+                      (click)="openMovementModal(product, 'ajuste')"
+                      class="text-yellow-600 hover:text-yellow-900"
+                    >
+                      <fa-icon [icon]="faSliders"></fa-icon>
+                    </button>
+                  </app-tooltip>
                 </td>
               </tr>
             }
@@ -221,6 +230,16 @@ export class StockComponent {
         return 'Ajustar Stock';
       default:
         return 'Movimiento de Stock';
+    }
+  }
+
+  getStockTooltip(stock: number): string {
+    if (stock <= 10) {
+      return 'Stock crítico';
+    } else if (stock <= 20) {
+      return 'Stock bajo';
+    } else {
+      return 'Stock normal';
     }
   }
 

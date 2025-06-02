@@ -5,11 +5,12 @@ import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -81,23 +82,29 @@ import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
                   {{ product.price.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span [class]="getStockClass(product.stock)">
-                    {{ product.stock }}
-                  </span>
+                  <app-tooltip [text]="getStockTooltip(product.stock)">
+                    <span [class]="getStockClass(product.stock)">
+                      {{ product.stock }}
+                    </span>
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    (click)="openProductModal(product)"
-                    class="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    <fa-icon [icon]="faEdit"></fa-icon>
-                  </button>
-                  <button
-                    (click)="deleteProduct(product)"
-                    class="text-red-600 hover:text-red-900"
-                  >
-                    <fa-icon [icon]="faTrash"></fa-icon>
-                  </button>
+                  <app-tooltip text="Editar producto">
+                    <button
+                      (click)="openProductModal(product)"
+                      class="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <fa-icon [icon]="faEdit"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Eliminar producto">
+                    <button
+                      (click)="deleteProduct(product)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </app-tooltip>
                 </td>
               </tr>
             }
@@ -265,6 +272,16 @@ export class ProductsComponent {
       return 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800';
     } else {
       return 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
+    }
+  }
+
+  getStockTooltip(stock: number): string {
+    if (stock <= 10) {
+      return 'Stock crítico';
+    } else if (stock <= 20) {
+      return 'Stock bajo';
+    } else {
+      return 'Stock normal';
     }
   }
 

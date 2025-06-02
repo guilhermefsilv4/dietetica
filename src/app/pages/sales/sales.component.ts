@@ -6,6 +6,7 @@ import { Product } from '@interfaces/product.interface';
 import { CurrencyArPipe } from '@pipes/currency-ar.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 interface SaleItem {
   productId: string;
@@ -26,7 +27,7 @@ interface Sale {
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyArPipe, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, CurrencyArPipe, FontAwesomeModule, TooltipComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de nova venda -->
@@ -122,12 +123,14 @@ interface Sale {
                       {{ item.subtotal | currencyAr }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        (click)="removeItem(item.productId)"
-                        class="text-red-600 hover:text-red-900"
-                      >
-                        <fa-icon [icon]="faTrash"></fa-icon>
-                      </button>
+                      <app-tooltip text="Eliminar producto de la venta">
+                        <button
+                          (click)="removeItem(item.productId)"
+                          class="text-red-600 hover:text-red-900"
+                        >
+                          <fa-icon [icon]="faTrash"></fa-icon>
+                        </button>
+                      </app-tooltip>
                     </td>
                   </tr>
                 }
@@ -199,18 +202,26 @@ interface Sale {
                     {{ sale.date | date:'dd/MM/yyyy HH:mm' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ sale.items.length }} items
+                    <app-tooltip text="Cantidad de productos">
+                      {{ sale.items.length }} items
+                    </app-tooltip>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ sale.total | currencyAr }}
+                    <app-tooltip text="Total de la venta">
+                      {{ sale.total | currencyAr }}
+                    </app-tooltip>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ sale.paymentMethod }}
+                    <app-tooltip text="Método de pago utilizado">
+                      {{ sale.paymentMethod }}
+                    </app-tooltip>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span [class]="getSaleStatusClass(sale.status)">
-                      {{ sale.status }}
-                    </span>
+                    <app-tooltip [text]="getStatusTooltip(sale.status)">
+                      <span [class]="getSaleStatusClass(sale.status)">
+                        {{ sale.status }}
+                      </span>
+                    </app-tooltip>
                   </td>
                 </tr>
               }
@@ -320,6 +331,17 @@ export class SalesComponent {
         return `${baseClass} bg-red-100 text-red-800`;
       default:
         return baseClass;
+    }
+  }
+
+  getStatusTooltip(status: Sale['status']): string {
+    switch (status) {
+      case 'completada':
+        return 'Venta finalizada con éxito';
+      case 'cancelada':
+        return 'Venta cancelada';
+      default:
+        return 'Estado desconocido';
     }
   }
 

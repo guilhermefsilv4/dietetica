@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Customer } from '@interfaces/customer.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -54,34 +55,46 @@ import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
-                      <div class="text-sm text-gray-500">{{ customer.document }}</div>
+                      <app-tooltip [text]="'DNI: ' + customer.document">
+                        <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
+                        <div class="text-sm text-gray-500">{{ customer.document }}</div>
+                      </app-tooltip>
                     </div>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ customer.email }}</div>
-                  <div class="text-sm text-gray-500">{{ customer.phone }}</div>
+                  <app-tooltip [text]="customer.address">
+                    <div class="text-sm text-gray-900">{{ customer.email }}</div>
+                    <div class="text-sm text-gray-500">{{ customer.phone }}</div>
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ customer.totalPurchases }}
+                  <app-tooltip text="Total de compras realizadas">
+                    {{ customer.totalPurchases }}
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ customer.lastPurchaseDate | date:'dd/MM/yyyy' }}
+                  <app-tooltip text="Fecha de la última compra">
+                    {{ customer.lastPurchaseDate | date:'dd/MM/yyyy' }}
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    (click)="openCustomerModal(customer)"
-                    class="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    <fa-icon [icon]="faEdit"></fa-icon>
-                  </button>
-                  <button
-                    (click)="deleteCustomer(customer)"
-                    class="text-red-600 hover:text-red-900"
-                  >
-                    <fa-icon [icon]="faTrash"></fa-icon>
-                  </button>
+                  <app-tooltip text="Editar cliente">
+                    <button
+                      (click)="openCustomerModal(customer)"
+                      class="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <fa-icon [icon]="faEdit"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Eliminar cliente">
+                    <button
+                      (click)="deleteCustomer(customer)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </app-tooltip>
                 </td>
               </tr>
             }
