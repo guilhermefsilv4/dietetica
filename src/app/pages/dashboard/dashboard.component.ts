@@ -5,11 +5,12 @@ import { StockService } from '@services/stock.service';
 import { ProductCardComponent } from '@components/product-card/product-card.component';
 import { Product } from '@interfaces/product.interface';
 import { StockMovement } from '@interfaces/stock-movement.interface';
+import { StockChartsComponent } from '@components/stock-charts/stock-charts.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent],
+  imports: [CommonModule, ProductCardComponent, StockChartsComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Métricas -->
@@ -26,6 +27,11 @@ import { StockMovement } from '@interfaces/stock-movement.interface';
           <h3 class="text-lg font-semibold text-gray-800 mb-2">Movimientos Hoy</h3>
           <p class="text-3xl font-bold text-green-600">{{ todayMovements() }}</p>
         </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="mb-8">
+        <app-stock-charts></app-stock-charts>
       </div>
 
       <!-- Productos con Stock Bajo -->

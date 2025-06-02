@@ -1,10 +1,10 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app';
-import { routes } from './app/app.routes';
+import { Chart, registerables } from 'chart.js';
 
-bootstrapApplication(AppComponent, {
-  providers: [
-    provideRouter(routes)
-  ]
-}).catch(err => console.error(err));
+// Registra todos os componentes do Chart.js
+Chart.register(...registerables);
+
+bootstrapApplication(AppComponent, appConfig)
+  .catch((err) => console.error(err));
