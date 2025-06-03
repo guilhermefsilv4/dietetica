@@ -1,0 +1,276 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Header com botão de adicionar -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Productos</h1>
+    <button
+      (click)="openProductModal()"
+      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+    >
+      Agregar Producto
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="flex flex-wrap gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar productos..."
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <select
+          [(ngModel)]="selectedCategory"
+          class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todas las categorías</option>
+          @for (category of categories(); track category) {
+            <option [value]="category">{{ category }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Produtos -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        @for (product of filteredProducts(); track product.id) {
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-10 w-10 flex-shrink-0">
+                  <img [src]="product.imageUrl" class="h-10 w-10 rounded-full object-cover" />
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
+                  <div class="text-sm text-gray-500">{{ product.brand }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ product.category }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {{ product.price.toFixed(2) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <app-tooltip [text]="getStockTooltip(product.stock)">
+                <span [class]="getStockClass(product.stock)">
+                  {{ product.stock }}
+                </span>
+              </app-tooltip>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <app-tooltip text="Editar producto">
+                <button
+                  (click)="openProductModal(product)"
+                  class="text-blue-600 hover:text-blue-900 mr-4"
+                >
+                  <fa-icon [icon]="faEdit"></fa-icon>
+                </button>
+              </app-tooltip>
+              <app-tooltip text="Eliminar producto">
+                <button
+                  (click)="deleteProduct(product)"
+                  class="text-red-600 hover:text-red-900"
+                >
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </app-tooltip>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de Produto -->
+  @if (showModal()) {
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-xl font-bold text-gray-800">
+            {{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Coluna 1 -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Código de Barras
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="productForm.barcode"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="productForm.name"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Marca
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="productForm.brand"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Rubro
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="productForm.category"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Descripción
+                </label>
+                <textarea
+                  [(ngModel)]="productForm.description"
+                  rows="3"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Coluna 2 -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Tipo de Venta
+                </label>
+                <select
+                  [(ngModel)]="productForm.saleType"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="unit">Por Unidad</option>
+                  <option value="weight">Por Peso</option>
+                </select>
+              </div>
+
+              @if (productForm.saleType === 'weight') {
+                <div>
+                  <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Unidad de Peso
+                  </label>
+                  <select
+                    [(ngModel)]="productForm.weightUnit"
+                    class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="g">Gramos (g)</option>
+                  </select>
+                </div>
+              }
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Precio
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="productForm.price"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Stock Inicial
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="productForm.stock"
+                  [disabled]="!!editingProduct"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  Stock Mínimo
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="productForm.minStock"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                  URL de la Imagen
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="productForm.imageUrl"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 flex justify-end gap-4">
+          <button
+            (click)="closeModal()"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800"
+          >
+            Cancelar
+          </button>
+          <button
+            (click)="saveProduct()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            [disabled]="!isValidProduct()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Confirmação -->
+  <app-confirmation-modal
+    [show]="showDeleteConfirmation()"
+    title="Confirmar Exclusión"
+    [message]="deleteConfirmationMessage()"
+    (confirm)="confirmDelete()"
+    (cancel)="cancelDelete()"
+  />
+</div> 
