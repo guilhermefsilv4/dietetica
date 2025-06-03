@@ -1,2 +1,9 @@
-<a routerLink="/tickets" routerLinkActive="bg-gray-900" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Tickets</a>
-<a routerLink="/cash-closing" routerLinkActive="bg-gray-900" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Cierre de Caja</a> 
+<div class="min-h-screen bg-gray-100">
+  <!-- Navbar -->
+  <app-nav-menu />
+
+  <!-- Conteúdo Principal -->
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div> 

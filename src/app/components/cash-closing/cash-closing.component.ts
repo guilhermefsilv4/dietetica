@@ -1,18 +1,22 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CashClosingService } from '@services/cash-closing.service';
 import { PaymentMethod } from '@interfaces/payment.interface';
 import { CashClosing } from '@interfaces/cash-closing.interface';
+import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-cash-closing',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmationModalComponent],
   templateUrl: './cash-closing.component.html'
 })
 export class CashClosingComponent {
   private cashClosingService = inject(CashClosingService);
+
+  // Estado do modal de confirmação
+  showCloseConfirmation = signal(false);
 
   currentClosing = this.cashClosingService.getCurrentClosing;
   closingHistory = this.cashClosingService.getClosingHistory;
@@ -49,11 +53,18 @@ export class CashClosingComponent {
     return this.totalActual() - this.totalExpected();
   };
 
-  async closeRegister() {
-    if (confirm('¿Está seguro que desea cerrar la caja?')) {
-      await this.cashClosingService.closeCurrentClosing(this.actualAmounts, this.notes);
-      this.resetForm();
-    }
+  closeRegister() {
+    this.showCloseConfirmation.set(true);
+  }
+
+  async confirmClose() {
+    await this.cashClosingService.closeCurrentClosing(this.actualAmounts, this.notes);
+    this.resetForm();
+    this.showCloseConfirmation.set(false);
+  }
+
+  cancelClose() {
+    this.showCloseConfirmation.set(false);
   }
 
   private resetForm() {

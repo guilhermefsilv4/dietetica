@@ -84,6 +84,15 @@
     </div>
   }
 
+  <!-- Modal de Confirmação -->
+  <app-confirmation-modal
+    [show]="showCloseConfirmation()"
+    title="Confirmar Cierre"
+    message="¿Está seguro que desea cerrar la caja?"
+    (confirm)="confirmClose()"
+    (cancel)="cancelClose()"
+  />
+
   <!-- Histórico -->
   @if (closingHistory().length > 0) {
     <div class="mt-8">

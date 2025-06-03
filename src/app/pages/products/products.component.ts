@@ -6,11 +6,12 @@ import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
+import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -278,6 +279,15 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
           </div>
         </div>
       }
+
+      <!-- Modal de Confirmação -->
+      <app-confirmation-modal
+        [show]="showDeleteConfirmation()"
+        title="Confirmar Exclusión"
+        [message]="deleteConfirmationMessage()"
+        (confirm)="confirmDelete()"
+        (cancel)="cancelDelete()"
+      />
     </div>
   `,
   styles: ``
@@ -292,6 +302,10 @@ export class ProductsComponent {
   selectedCategory = signal('');
   showModal = signal(false);
   editingProduct: Product | null = null;
+
+  // Estado do modal de confirmação
+  showDeleteConfirmation = signal(false);
+  productToDelete = signal<Product | null>(null);
 
   productForm: Partial<Product> = {
     name: '',
@@ -333,6 +347,12 @@ export class ProductsComponent {
     }
 
     return products;
+  });
+
+  // Computed para mensagem de confirmação
+  deleteConfirmationMessage = computed(() => {
+    const productName = this.productToDelete()?.name || '';
+    return `¿Está seguro que desea eliminar el producto "${productName}"?`;
   });
 
   // Métodos auxiliares
@@ -430,12 +450,25 @@ export class ProductsComponent {
   }
 
   deleteProduct(product: Product) {
-    if (confirm(`¿Está seguro que desea eliminar el producto "${product.name}"?`)) {
-      try {
-        this.productService.deleteProduct(product.id);
-      } catch (error) {
-        console.error('Error al eliminar producto:', error);
+    this.productToDelete.set(product);
+    this.showDeleteConfirmation.set(true);
+  }
+
+  confirmDelete() {
+    try {
+      if (this.productToDelete()) {
+        this.productService.deleteProduct(this.productToDelete()!.id);
       }
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+    } finally {
+      this.showDeleteConfirmation.set(false);
+      this.productToDelete.set(null);
     }
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirmation.set(false);
+    this.productToDelete.set(null);
   }
 } 

@@ -10,11 +10,12 @@ import { TicketService } from '@services/ticket.service';
 import { Sale, SaleItem } from '@interfaces/sale.interface';
 import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductVariant } from '@interfaces/product-variant.interface';
+import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, ConfirmationModalComponent],
   templateUrl: './sales.component.html',
   styles: []
 })
@@ -28,6 +29,9 @@ export class SalesComponent {
   quantityInput = 1;
   selectedPaymentMethod: PaymentMethod = 'cash';
   paymentAmount = 0;
+
+  // Estado do modal de confirmação
+  showCancelConfirmation = signal(false);
 
   // Mock de vendas usando signal
   private mockSales = signal<Sale[]>([
@@ -152,10 +156,17 @@ export class SalesComponent {
   }
 
   cancelSale(): void {
-    if (confirm('¿Está seguro que desea cancelar la venta?')) {
-      this.saleService.cancelSale();
-      this.resetInputs();
-    }
+    this.showCancelConfirmation.set(true);
+  }
+
+  confirmCancelSale(): void {
+    this.saleService.cancelSale();
+    this.resetInputs();
+    this.showCancelConfirmation.set(false);
+  }
+
+  cancelCancelSale(): void {
+    this.showCancelConfirmation.set(false);
   }
 
   // Métodos de produtos

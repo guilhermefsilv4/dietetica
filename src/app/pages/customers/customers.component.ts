@@ -1,15 +1,16 @@
 import { Component, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Customer } from '@interfaces/customer.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
+import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, DatePipe],
   template: `
     <div class="container mx-auto px-4 py-8">
       <!-- Header com botão de adicionar -->
@@ -179,6 +180,15 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
           </div>
         </div>
       }
+
+      <!-- Modal de Confirmação -->
+      <app-confirmation-modal
+        [show]="showDeleteConfirmation()"
+        title="Confirmar Exclusión"
+        [message]="deleteConfirmationMessage()"
+        (confirm)="confirmDelete()"
+        (cancel)="cancelDelete()"
+      />
     </div>
   `,
   styles: ``
@@ -192,6 +202,10 @@ export class CustomersComponent {
   searchTerm = signal('');
   showModal = signal(false);
   editingCustomer: Customer | null = null;
+
+  // Estado do modal de confirmação
+  showDeleteConfirmation = signal(false);
+  customerToDelete = signal<Customer | null>(null);
 
   customerForm: Partial<Customer> = {
     name: '',
@@ -230,6 +244,12 @@ export class CustomersComponent {
     }
 
     return customers;
+  });
+
+  // Computed para mensagem de confirmação
+  deleteConfirmationMessage = computed(() => {
+    const customerName = this.customerToDelete()?.name || '';
+    return `¿Está seguro que desea eliminar el cliente "${customerName}"?`;
   });
 
   // Métodos de manipulação do modal
@@ -299,11 +319,23 @@ export class CustomersComponent {
   }
 
   deleteCustomer(customer: Customer) {
-    if (confirm(`¿Está seguro que desea eliminar el cliente "${customer.name}"?`)) {
-      const index = this.mockCustomers.findIndex(c => c.id === customer.id);
+    this.customerToDelete.set(customer);
+    this.showDeleteConfirmation.set(true);
+  }
+
+  confirmDelete() {
+    if (this.customerToDelete()) {
+      const index = this.mockCustomers.findIndex(c => c.id === this.customerToDelete()!.id);
       if (index >= 0) {
         this.mockCustomers.splice(index, 1);
       }
     }
+    this.showDeleteConfirmation.set(false);
+    this.customerToDelete.set(null);
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirmation.set(false);
+    this.customerToDelete.set(null);
   }
 } 

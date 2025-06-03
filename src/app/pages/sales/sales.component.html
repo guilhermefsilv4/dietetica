@@ -245,4 +245,13 @@
       </div>
     </div>
   }
+
+  <!-- Modal de Confirmação -->
+  <app-confirmation-modal
+    [show]="showCancelConfirmation()"
+    title="Confirmar Cancelación"
+    message="¿Está seguro que desea cancelar la venta actual?"
+    (confirm)="confirmCancelSale()"
+    (cancel)="cancelCancelSale()"
+  />
 </div> 
