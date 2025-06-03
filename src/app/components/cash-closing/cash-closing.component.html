@@ -1,0 +1,113 @@
+<div class="p-6">
+  <h2 class="text-2xl font-bold mb-6">Cierre de Caja</h2>
+
+  @if (currentClosing()) {
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Valores Esperados -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Valores Esperados</h3>
+          <div class="space-y-4">
+            @for (item of expectedAmountsArray(); track item.method) {
+              <div class="flex justify-between items-center">
+                <span class="capitalize">{{ item.method }}:</span>
+                <span class="font-semibold">${{ item.amount.toFixed(2) }}</span>
+              </div>
+            }
+            <div class="border-t pt-2 font-bold">
+              <div class="flex justify-between items-center">
+                <span>Total:</span>
+                <span>${{ totalExpected().toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Valores Reais -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Valores Reales</h3>
+          <div class="space-y-4">
+            @for (item of expectedAmountsArray(); track item.method) {
+              <div class="flex justify-between items-center">
+                <span class="capitalize">{{ item.method }}:</span>
+                <input
+                  type="number"
+                  [(ngModel)]="actualAmounts[item.method]"
+                  class="border rounded px-2 py-1 w-32 text-right"
+                  step="0.01"
+                >
+              </div>
+            }
+            <div class="border-t pt-2 font-bold">
+              <div class="flex justify-between items-center">
+                <span>Total:</span>
+                <span>${{ totalActual().toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diferença -->
+      <div class="mt-6 p-4 rounded" [ngClass]="{
+        'bg-red-100': difference() < 0,
+        'bg-green-100': difference() >= 0
+      }">
+        <div class="flex justify-between items-center font-bold">
+          <span>Diferencia:</span>
+          <span [ngClass]="{
+            'text-red-600': difference() < 0,
+            'text-green-600': difference() >= 0
+          }">${{ difference().toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="mt-6">
+        <label class="block text-sm font-medium mb-2">Notas:</label>
+        <textarea
+          [(ngModel)]="notes"
+          class="w-full border rounded p-2 h-24"
+          placeholder="Agregar notas sobre el cierre..."
+        ></textarea>
+      </div>
+
+      <!-- Botões -->
+      <div class="mt-6 flex justify-end space-x-4">
+        <button
+          (click)="closeRegister()"
+          class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        >
+          Cerrar Caja
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Histórico -->
+  @if (closingHistory().length > 0) {
+    <div class="mt-8">
+      <h3 class="text-xl font-bold mb-4">Histórico de Cierres</h3>
+      <div class="space-y-4">
+        @for (closing of closingHistory(); track closing.id) {
+          <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-semibold">
+                {{ closing.closedAt | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+              <span [ngClass]="{
+                'text-red-600': closing.difference < 0,
+                'text-green-600': closing.difference >= 0
+              }">
+                Diferencia: ${{ closing.difference.toFixed(2) }}
+              </span>
+            </div>
+            @if (closing.notes) {
+              <p class="text-sm text-gray-600">{{ closing.notes }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div> 

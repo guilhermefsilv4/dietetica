@@ -15,5 +15,10 @@ export const routes: Routes = [
   {
     path: 'tickets',
     loadComponent: () => import('./pages/tickets/tickets.component').then(m => m.TicketsComponent)
+  },
+  {
+    path: 'cash-closing',
+    loadComponent: () => import('./components/cash-closing/cash-closing.component').then(m => m.CashClosingComponent),
+    title: 'Cierre de Caja'
   }
 ];

@@ -5,6 +5,7 @@ import { ProductVariant } from '@interfaces/product-variant.interface';
 import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductService } from './product.service';
 import { TicketService } from './ticket.service';
+import { MockDataService } from './mock-data.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +16,12 @@ export class SaleService {
 
   constructor(
     private productService: ProductService,
-    private ticketService: TicketService
-  ) {}
+    private ticketService: TicketService,
+    private mockDataService: MockDataService
+  ) {
+    // Inicializa com dados mockados
+    this.sales.set(this.mockDataService.getMockSales());
+  }
 
   // Getters
   getCurrentSale() {
@@ -51,8 +56,10 @@ export class SaleService {
       id: Math.random().toString(36).substr(2, 9),
       productId: product.id,
       variantId: variant?.id,
+      name: variant?.name || product.name,
       quantity,
       unitPrice: variant?.price || product.price,
+      price: variant?.price || product.price,
       subtotal: (variant?.price || product.price) * quantity,
       product,
       variant
@@ -233,5 +240,17 @@ export class SaleService {
     }
 
     return null;
+  }
+
+  // Métodos
+  addSale(sale: Sale) {
+    this.sales.update(sales => [...sales, sale]);
+    // Em produção, aqui faria a chamada para a API
+  }
+
+  // Método para adicionar uma venda mockada (apenas para desenvolvimento)
+  addMockSale() {
+    const mockSale = this.mockDataService.generateMockSale();
+    this.addSale(mockSale);
   }
 } 

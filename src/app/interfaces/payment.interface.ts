@@ -1,10 +1,10 @@
-export type PaymentMethod = 'debit' | 'credit' | 'qr' | 'cash' | 'transfer';
+export type PaymentMethod = 'cash' | 'credit' | 'debit' | 'transfer' | 'qr';
 
 export interface Payment {
   id: string;
+  date: Date;
   method: PaymentMethod;
   amount: number;
-  date: Date;
   reference?: string;  // Referência do pagamento (número do cartão, ID da transferência, etc)
 }
 

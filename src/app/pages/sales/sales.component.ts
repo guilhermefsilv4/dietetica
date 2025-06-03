@@ -37,10 +37,12 @@ export class SalesComponent {
       items: [
         { 
           id: '1',
-          productId: '1', 
-          quantity: 2, 
-          unitPrice: 100, 
-          subtotal: 200 
+          productId: '1',
+          name: 'Produto Teste',
+          quantity: 2,
+          unitPrice: 100,
+          price: 100,
+          subtotal: 200
         }
       ],
       subtotal: 200,
