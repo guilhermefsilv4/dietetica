@@ -36,6 +36,24 @@ const mapToDb = (apiProduct) => ({
   min_stock: apiProduct.minStock
 });
 
+// Funções auxiliares para movimentações
+const mapMovementToApi = (dbMovement) => ({
+  ...dbMovement,
+  productId: dbMovement.product_id,
+  previousStock: dbMovement.previous_stock,
+  currentStock: dbMovement.current_stock,
+  userId: dbMovement.user_id,
+  createdAt: dbMovement.created_at
+});
+
+const mapMovementToDb = (apiMovement) => ({
+  ...apiMovement,
+  product_id: apiMovement.productId,
+  previous_stock: apiMovement.previousStock,
+  current_stock: apiMovement.currentStock,
+  user_id: apiMovement.userId
+});
+
 // Rotas
 app.get('/api/products', (req, res) => {
   db.all('SELECT * FROM products', [], (err, rows) => {
@@ -87,7 +105,7 @@ app.post('/api/products', (req, res) => {
         res.status(500).json({ error: err.message });
         return;
       }
-      
+
       // Retorna o produto no formato da API
       const apiProduct = mapToApi({
         id: this.lastID,
@@ -153,7 +171,56 @@ app.delete('/api/products/:id', (req, res) => {
   });
 });
 
+// Rotas de movimentações de estoque
+app.get('/api/stock-movements', (req, res) => {
+  db.all('SELECT * FROM stock_movements ORDER BY date DESC', [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows.map(mapMovementToApi));
+  });
+});
+
+app.post('/api/stock-movements', (req, res) => {
+  const dbMovement = mapMovementToDb(req.body);
+  const {
+    product_id,
+    type,
+    quantity,
+    date,
+    description,
+    previous_stock,
+    current_stock,
+    user_id
+  } = dbMovement;
+
+  // Gerar ID único
+  const id = Math.random().toString(36).substr(2, 9);
+
+  db.run(
+    `INSERT INTO stock_movements (
+      id, product_id, type, quantity, date,
+      description, previous_stock, current_stock, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, product_id, type, quantity, date, description, previous_stock, current_stock, user_id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      // Retorna a movimentação no formato da API
+      const apiMovement = mapMovementToApi({
+        id,
+        ...dbMovement
+      });
+      res.status(201).json(apiMovement);
+    }
+  );
+});
+
 // Iniciar o servidor
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
-}); 
+});

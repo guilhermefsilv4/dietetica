@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 import { Product } from '@interfaces/product.interface';
-import { StockMovement, StockMovementType } from '@interfaces/stock-movement.interface';
+import { StockMovementType } from '@interfaces/stock-movement.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
@@ -129,7 +129,7 @@ export class StockComponent {
     }
 
     try {
-      this.stockService.addStockMovement(
+      this.stockService.addStockMovementDb(
         this.selectedProduct.id,
         this.selectedMovementType,
         this.movementQuantity,

@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Chart, ChartConfiguration, ChartOptions } from 'chart.js';
+import { Chart } from 'chart.js';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 
@@ -50,7 +50,7 @@ export class StockChartsComponent implements OnInit, AfterViewInit {
     const canvas = this.stockMovementsChartRef.nativeElement;
     if (!canvas) return;
 
-    const movements = this.stockService.getStockMovements()();
+    const movements = this.stockService.getStockMovementsDb();
     const lastWeekMovements = this.getLastWeekMovements(movements);
 
     const entradas = new Array(7).fill(0);
@@ -118,7 +118,7 @@ export class StockChartsComponent implements OnInit, AfterViewInit {
     const canvas = this.lowStockChartRef.nativeElement;
     if (!canvas) return;
 
-    const lowStockProducts = this.productService.getLowStockProducts(20);
+    const lowStockProducts = this.productService.getLowStockProductsDb(20);
     const labels = lowStockProducts.map(p => p.name);
     const data = lowStockProducts.map(p => p.stock);
     const thresholds = lowStockProducts.map(() => 20); // Linha do limite de estoque baixo
@@ -131,7 +131,7 @@ export class StockChartsComponent implements OnInit, AfterViewInit {
           {
             label: 'Stock Actual',
             data,
-            backgroundColor: data.map(stock => 
+            backgroundColor: data.map(stock =>
               stock <= 10 ? 'rgb(239, 68, 68)' : // Vermelho
               stock <= 20 ? 'rgb(234, 179, 8)' : // Amarelo
               'rgb(34, 197, 94)' // Verde
@@ -183,4 +183,4 @@ export class StockChartsComponent implements OnInit, AfterViewInit {
     const diff = date2.getTime() - date1.getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }
-} 
+}
