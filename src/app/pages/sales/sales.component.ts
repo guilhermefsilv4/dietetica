@@ -235,9 +235,8 @@ export class SalesComponent {
 
   async completeSale(): Promise<void> {
     try {
-      const completedSale = this.saleService.completeSale();
+      const completedSale = await this.saleService.completeSale();
       if (completedSale) {
-        await this.ticketService.printTicket(completedSale);
         this.resetInputs();
       }
     } catch (error) {

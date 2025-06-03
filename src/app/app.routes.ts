@@ -11,5 +11,9 @@ export const routes: Routes = [
   { path: 'stock', component: StockComponent },
   { path: 'products', component: ProductsComponent },
   { path: 'sales', component: SalesComponent },
-  { path: 'customers', component: CustomersComponent }
+  { path: 'customers', component: CustomersComponent },
+  {
+    path: 'tickets',
+    loadComponent: () => import('./pages/tickets/tickets.component').then(m => m.TicketsComponent)
+  }
 ];

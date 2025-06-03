@@ -4,6 +4,7 @@ import { Product } from '@interfaces/product.interface';
 import { ProductVariant } from '@interfaces/product-variant.interface';
 import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductService } from './product.service';
+import { TicketService } from './ticket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,10 @@ export class SaleService {
   private currentSale = signal<Sale | null>(null);
   private sales = signal<Sale[]>([]);
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private ticketService: TicketService
+  ) {}
 
   // Getters
   getCurrentSale() {
@@ -150,7 +154,7 @@ export class SaleService {
   }
 
   // Finalizar venda
-  completeSale() {
+  async completeSale() {
     const currentSale = this.currentSale();
     if (!currentSale) return;
 
@@ -166,15 +170,31 @@ export class SaleService {
       status: 'completed'
     };
 
+    // Atualiza o estado
     this.sales.update(sales => [...sales, completedSale]);
     this.currentSale.set(null);
 
-    // Aqui você pode adicionar a lógica para:
-    // 1. Atualizar o estoque
-    // 2. Imprimir o ticket
-    // 3. Salvar a venda no backend
+    // Atualiza o estoque (TODO: implementar)
+    this.updateStock(completedSale);
+
+    // Imprime o ticket
+    await this.ticketService.printTicket(completedSale);
     
     return completedSale;
+  }
+
+  // Atualizar estoque após a venda
+  private updateStock(sale: Sale) {
+    // TODO: Implementar atualização do estoque
+    sale.items.forEach(item => {
+      if (item.variant) {
+        // Atualizar estoque da variante
+        console.log(`Atualizando estoque da variante ${item.variant.name} do produto ${item.product?.name}`);
+      } else if (item.product) {
+        // Atualizar estoque do produto
+        console.log(`Atualizando estoque do produto ${item.product.name}`);
+      }
+    });
   }
 
   // Cancelar venda
