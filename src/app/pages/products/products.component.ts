@@ -114,85 +114,153 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
       <!-- Modal de Produto -->
       @if (showModal()) {
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-          <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">
-              {{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}
-            </h2>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="productForm.name"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Marca
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="productForm.brand"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Categoría
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="productForm.category"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Precio
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="productForm.price"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Stock Inicial
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="productForm.stock"
-                  [disabled]="!!editingProduct"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  URL de la Imagen
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="productForm.imageUrl"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  [(ngModel)]="productForm.description"
-                  rows="3"
-                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                ></textarea>
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center p-4">
+          <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="p-6 border-b border-gray-200">
+              <h2 class="text-xl font-bold text-gray-800">
+                {{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}
+              </h2>
+            </div>
+            
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Coluna 1 -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Código de Barras
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="productForm.barcode"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Nombre
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="productForm.name"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Marca
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="productForm.brand"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Rubro
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="productForm.category"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Descripción
+                    </label>
+                    <textarea
+                      [(ngModel)]="productForm.description"
+                      rows="3"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <!-- Coluna 2 -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Tipo de Venta
+                    </label>
+                    <select
+                      [(ngModel)]="productForm.saleType"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="unit">Por Unidad</option>
+                      <option value="weight">Por Peso</option>
+                    </select>
+                  </div>
+
+                  @if (productForm.saleType === 'weight') {
+                    <div>
+                      <label class="block text-gray-700 text-sm font-bold mb-2">
+                        Unidad de Peso
+                      </label>
+                      <select
+                        [(ngModel)]="productForm.weightUnit"
+                        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="kg">Kilogramos (kg)</option>
+                        <option value="g">Gramos (g)</option>
+                      </select>
+                    </div>
+                  }
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Precio
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="productForm.price"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Stock Inicial
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="productForm.stock"
+                      [disabled]="!!editingProduct"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      Stock Mínimo
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="productForm.minStock"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                      URL de la Imagen
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="productForm.imageUrl"
+                      class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="flex justify-end gap-4 mt-6">
+
+            <div class="p-6 border-t border-gray-200 flex justify-end gap-4">
               <button
                 (click)="closeModal()"
                 class="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -232,6 +300,9 @@ export class ProductsComponent {
     description: '',
     price: 0,
     stock: 0,
+    minStock: 0,
+    barcode: '',
+    saleType: 'unit',
     imageUrl: ''
   };
 
@@ -299,6 +370,9 @@ export class ProductsComponent {
         description: '',
         price: 0,
         stock: 0,
+        minStock: 0,
+        barcode: '',
+        saleType: 'unit',
         imageUrl: ''
       };
     }
@@ -315,6 +389,9 @@ export class ProductsComponent {
       description: '',
       price: 0,
       stock: 0,
+      minStock: 0,
+      barcode: '',
+      saleType: 'unit',
       imageUrl: ''
     };
   }
@@ -326,8 +403,12 @@ export class ProductsComponent {
       this.productForm.category &&
       this.productForm.description &&
       this.productForm.price &&
+      this.productForm.barcode &&
+      this.productForm.saleType &&
+      this.productForm.minStock &&
       (this.editingProduct || this.productForm.stock) &&
-      this.productForm.imageUrl
+      this.productForm.imageUrl &&
+      (this.productForm.saleType !== 'weight' || this.productForm.weightUnit)
     );
   }
 

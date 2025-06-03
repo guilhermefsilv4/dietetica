@@ -38,8 +38,10 @@ export class ProductService {
     this.products.update(products => products.filter(p => p.id !== id));
   }
 
-  getLowStockProducts(threshold: number = 20) {
-    return this.products().filter(product => product.stock <= threshold);
+  getLowStockProducts(threshold?: number) {
+    return this.products().filter(product => 
+      product.stock <= (threshold || product.minStock)
+    );
   }
 
   getProductsByCategory(category: string) {
