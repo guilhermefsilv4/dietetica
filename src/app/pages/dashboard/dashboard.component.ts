@@ -4,15 +4,20 @@ import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 import { ProductCardComponent } from '@components/product-card/product-card.component';
 import { StockChartsComponent } from '@components/stock-charts/stock-charts.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent, StockChartsComponent],
+  imports: [CommonModule, ProductCardComponent, StockChartsComponent, FontAwesomeModule],
   templateUrl: './dashboard.component.html',
   styles: ``
 })
 export class DashboardComponent {
+  // Ícones
+  faBoxesStacked = faBoxesStacked;
+
   constructor(
     private productService: ProductService,
     private stockService: StockService
@@ -27,9 +32,7 @@ export class DashboardComponent {
 
   lowStockCount = computed(() => this.lowStockProducts().length);
 
-  recentMovements = computed(() =>
-    this.stockService.getRecentMovements(10)
-  );
+  recentMovements = computed(() => this.stockService.getRecentMovementsDb(10));
 
   todayMovements = computed(() => {
     const today = new Date();

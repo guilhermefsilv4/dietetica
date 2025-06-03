@@ -34,40 +34,48 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-bold text-gray-800 mb-4">Movimientos Recientes</h2>
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Final</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          @for (movement of recentMovements(); track movement.id) {
+      @if (recentMovements().length > 0) {
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
             <tr>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ getProductName(movement.productId) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span [class]="getMovementTypeClass(movement.type)">
-                  {{ movement.type }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ movement.quantity }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ movement.currentStock }}
-              </td>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Final</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (movement of recentMovements(); track movement.id) {
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ getProductName(movement.productId) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <span [class]="getMovementTypeClass(movement.type)">
+                    {{ movement.type }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ movement.quantity }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ movement.currentStock }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="text-center py-12">
+          <fa-icon [icon]="faBoxesStacked" class="text-gray-400 text-5xl mb-4"></fa-icon>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No hay movimientos recientes</h3>
+          <p class="text-gray-500">Los movimientos de stock aparecerán aquí cuando se registren entradas, salidas o ajustes.</p>
+        </div>
+      }
     </div>
   </div>
 </div>
