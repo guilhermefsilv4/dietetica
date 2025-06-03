@@ -1,48 +1,37 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { StockMovement, StockMovementType } from '@interfaces/stock-movement.interface';
+import { MOCK_STOCK_MOVEMENTS } from '@app/mocks/stock-movements.mock';
 import { ProductService } from '@services/product.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StockService {
-  // Signals
-  private readonly stockMovements = signal<StockMovement[]>([]);
-
-  // Computed values
-  readonly recentMovements = computed(() => {
-    return this.stockMovements()
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 10);
-  });
-
-  readonly stockAlerts = computed(() => {
-    return this.productService.lowStockProducts();
-  });
-
-  readonly totalMovements = computed(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return this.stockMovements()
-      .filter(movement => {
-        const movementDate = new Date(movement.date);
-        movementDate.setHours(0, 0, 0, 0);
-        return movementDate.getTime() === today.getTime();
-      }).length;
-  });
+  private stockMovements = signal<StockMovement[]>(MOCK_STOCK_MOVEMENTS);
 
   constructor(private productService: ProductService) {}
 
-  // Methods
-  registerMovement(
+  getStockMovements() {
+    return this.stockMovements;
+  }
+
+  getMovementsByProduct(productId: string) {
+    return this.stockMovements().filter(movement => movement.productId === productId);
+  }
+
+  getRecentMovements(limit: number = 10) {
+    return [...this.stockMovements()]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, limit);
+  }
+
+  addStockMovement(
     productId: string,
     type: StockMovementType,
     quantity: number,
-    description: string,
-    userId: string
+    description: string
   ) {
-    const product = this.productService.getProduct(productId);
+    const product = this.productService.getProductById(productId);
     if (!product) {
       throw new Error('Producto no encontrado');
     }
@@ -52,21 +41,24 @@ export class StockService {
 
     switch (type) {
       case 'entrada':
-        currentStock += quantity;
+        currentStock = previousStock + quantity;
         break;
       case 'salida':
         if (previousStock < quantity) {
           throw new Error('Stock insuficiente');
         }
-        currentStock -= quantity;
+        currentStock = previousStock - quantity;
         break;
       case 'ajuste':
-        currentStock = quantity;
+        currentStock = previousStock + quantity; // quantity pode ser negativo para ajustes de redução
+        if (currentStock < 0) {
+          throw new Error('El ajuste resultaría en stock negativo');
+        }
         break;
     }
 
-    const movement: StockMovement = {
-      id: crypto.randomUUID(),
+    const newMovement: StockMovement = {
+      id: Math.random().toString(36).substr(2, 9),
       productId,
       type,
       quantity,
@@ -74,46 +66,22 @@ export class StockService {
       description,
       previousStock,
       currentStock,
-      userId
+      userId: 'USER001' // Mockado por enquanto
     };
 
-    this.stockMovements.update(movements => [...movements, movement]);
-    this.productService.updateProductStock(productId, currentStock);
+    this.stockMovements.update(movements => [...movements, newMovement]);
+    this.productService.updateProduct(productId, { stock: currentStock });
+
+    return newMovement;
   }
 
-  getMovementsByProduct(productId: string): StockMovement[] {
-    return this.stockMovements()
-      .filter(movement => movement.productId === productId)
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  getStockMovementsByDateRange(startDate: Date, endDate: Date) {
+    return this.stockMovements().filter(movement => 
+      movement.date >= startDate && movement.date <= endDate
+    );
   }
 
-  // Mock data for testing
-  loadMockData() {
-    const mockMovements: StockMovement[] = [
-      {
-        id: '1',
-        productId: '1',
-        type: 'entrada',
-        quantity: 100,
-        date: new Date(2024, 4, 30),
-        description: 'Compra inicial',
-        previousStock: 0,
-        currentStock: 100,
-        userId: 'admin'
-      },
-      {
-        id: '2',
-        productId: '1',
-        type: 'salida',
-        quantity: 50,
-        date: new Date(2024, 4, 30),
-        description: 'Venta',
-        previousStock: 100,
-        currentStock: 50,
-        userId: 'admin'
-      }
-    ];
-
-    this.stockMovements.set(mockMovements);
+  getStockMovementsByType(type: StockMovementType) {
+    return this.stockMovements().filter(movement => movement.type === type);
   }
 } 

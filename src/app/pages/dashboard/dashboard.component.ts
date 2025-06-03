@@ -1,59 +1,54 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 import { ProductCardComponent } from '@components/product-card/product-card.component';
+import { Product } from '@interfaces/product.interface';
+import { StockMovement } from '@interfaces/stock-movement.interface';
+import { StockChartsComponent } from '@components/stock-charts/stock-charts.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent],
+  imports: [CommonModule, ProductCardComponent, StockChartsComponent],
   template: `
-    <div class="p-6">
-      <h1 class="text-3xl font-bold text-gray-800 mb-8">Panel de Control</h1>
-
-      <!-- Cards de Estadísticas -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="container mx-auto px-4 py-8">
+      <!-- Métricas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg text-gray-600 mb-2">Productos Totales</h3>
-          <p class="text-3xl font-bold text-blue-600">{{ productService.totalProducts() }}</p>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Total de Productos</h3>
+          <p class="text-3xl font-bold text-blue-600">{{ totalProducts() }}</p>
         </div>
-
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg text-gray-600 mb-2">Productos con Stock Bajo</h3>
-          <p class="text-3xl font-bold text-orange-600">{{ productService.lowStockProducts().length }}</p>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Productos con Stock Bajo</h3>
+          <p class="text-3xl font-bold text-red-600">{{ lowStockCount() }}</p>
         </div>
-
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg text-gray-600 mb-2">Movimientos Hoy</h3>
-          <p class="text-3xl font-bold text-green-600">{{ stockService.totalMovements() }}</p>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg text-gray-600 mb-2">Alertas de Stock</h3>
-          <p class="text-3xl font-bold text-red-600">{{ stockService.stockAlerts().length }}</p>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Movimientos Hoy</h3>
+          <p class="text-3xl font-bold text-green-600">{{ todayMovements() }}</p>
         </div>
       </div>
 
-      <!-- Productos con Stock Bajo -->
+      <!-- Gráficos -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Productos con Stock Bajo</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          @for (product of productService.lowStockProducts(); track product.id) {
-            <app-product-card 
-              [productData]="product"
-              (onEdit)="handleEditProduct($event)"
-              (onDelete)="handleDeleteProduct($event)"
-            />
+        <app-stock-charts></app-stock-charts>
+      </div>
+
+      <!-- Productos con Stock Bajo -->
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Productos con Stock Bajo</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (product of lowStockProducts(); track product.id) {
+            <app-product-card [productData]="product" />
           }
         </div>
       </div>
 
-      <!-- Últimos Movimientos -->
-      <div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Últimos Movimientos</h2>
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-          <table class="min-w-full">
+      <!-- Movimientos Recientes -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Movimientos Recientes</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
@@ -64,7 +59,7 @@ import { ProductCardComponent } from '@components/product-card/product-card.comp
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              @for (movement of stockService.recentMovements(); track movement.id) {
+              @for (movement of recentMovements(); track movement.id) {
                 <tr>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
@@ -74,7 +69,7 @@ import { ProductCardComponent } from '@components/product-card/product-card.comp
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span [class]="getMovementTypeClass(movement.type)">
-                      {{ getMovementTypeLabel(movement.type) }}
+                      {{ movement.type }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -90,49 +85,56 @@ import { ProductCardComponent } from '@components/product-card/product-card.comp
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: ``
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   constructor(
-    protected productService: ProductService,
-    protected stockService: StockService
+    private productService: ProductService,
+    private stockService: StockService
   ) {}
 
-  ngOnInit() {
-    // Carrega dados mock para teste
-    this.productService.loadMockData();
-    this.stockService.loadMockData();
-  }
+  // Métricas
+  totalProducts = computed(() => this.productService.getProducts()().length);
+  
+  lowStockProducts = computed(() => 
+    this.productService.getLowStockProducts(20)
+  );
 
+  lowStockCount = computed(() => this.lowStockProducts().length);
+
+  recentMovements = computed(() => 
+    this.stockService.getRecentMovements(10)
+  );
+
+  todayMovements = computed(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return this.stockService.getStockMovements()().filter(movement => {
+      const movementDate = new Date(movement.date);
+      movementDate.setHours(0, 0, 0, 0);
+      return movementDate.getTime() === today.getTime();
+    }).length;
+  });
+
+  // Helpers
   getProductName(productId: string): string {
-    return this.productService.getProduct(productId)?.name || 'Producto no encontrado';
-  }
-
-  getMovementTypeLabel(type: string): string {
-    const labels = {
-      'entrada': 'Entrada',
-      'salida': 'Salida',
-      'ajuste': 'Ajuste'
-    };
-    return labels[type as keyof typeof labels];
+    const product = this.productService.getProductById(productId);
+    return product?.name || 'Producto no encontrado';
   }
 
   getMovementTypeClass(type: string): string {
-    const classes = {
-      'entrada': 'inline-flex px-2 text-xs font-semibold rounded-full bg-green-100 text-green-800',
-      'salida': 'inline-flex px-2 text-xs font-semibold rounded-full bg-red-100 text-red-800',
-      'ajuste': 'inline-flex px-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-800'
-    };
-    return classes[type as keyof typeof classes];
-  }
-
-  handleEditProduct(product: any) {
-    // Implementar lógica de edição
-    console.log('Editar producto:', product);
-  }
-
-  handleDeleteProduct(productId: string) {
-    // Implementar lógica de exclusão
-    console.log('Eliminar producto:', productId);
+    const baseClass = 'px-2 py-1 text-xs font-medium rounded-full';
+    switch (type) {
+      case 'entrada':
+        return `${baseClass} bg-green-100 text-green-800`;
+      case 'salida':
+        return `${baseClass} bg-red-100 text-red-800`;
+      case 'ajuste':
+        return `${baseClass} bg-yellow-100 text-yellow-800`;
+      default:
+        return baseClass;
+    }
   }
 } 

@@ -1,241 +1,290 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
 import { Product } from '@interfaces/product.interface';
-import { StockMovementType } from '@interfaces/stock-movement.interface';
+import { StockMovement, StockMovementType } from '@interfaces/stock-movement.interface';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-icons';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
   template: `
-    <div class="p-6">
-      <h1 class="text-3xl font-bold text-gray-800 mb-8">Control de Stock</h1>
-
-      <!-- Formulário de Movimentação -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Registrar Movimiento</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Seleção de Produto -->
+    <div class="container mx-auto px-4 py-8">
+      <!-- Filtros -->
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex flex-wrap gap-4">
+          <div class="flex-1">
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              placeholder="Buscar productos..."
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Producto</label>
-            <select 
-              [(ngModel)]="selectedProductId"
-              (ngModelChange)="handleProductChange($event)"
-              class="w-full border border-gray-300 rounded-md shadow-sm p-2">
-              <option value="">Seleccionar producto</option>
-              @for (product of productService.filteredProducts(); track product.id) {
-                <option [value]="product.id">{{ product.name }} (Stock: {{ product.stock }})</option>
+            <select
+              [(ngModel)]="selectedCategory"
+              class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todas las categorías</option>
+              @for (category of categories(); track category) {
+                <option [value]="category">{{ category }}</option>
               }
             </select>
           </div>
-
-          <!-- Tipo de Movimentação -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Movimiento</label>
-            <select 
-              [(ngModel)]="movementType"
-              class="w-full border border-gray-300 rounded-md shadow-sm p-2">
-              <option value="entrada">Entrada</option>
-              <option value="salida">Salida</option>
-              <option value="ajuste">Ajuste</option>
-            </select>
-          </div>
-
-          <!-- Quantidade -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
-            <input 
-              type="number"
-              [(ngModel)]="quantity"
-              min="0"
-              class="w-full border border-gray-300 rounded-md shadow-sm p-2">
-          </div>
-
-          <!-- Descrição -->
-          <div class="md:col-span-2 lg:col-span-3">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-            <input 
-              type="text"
-              [(ngModel)]="description"
-              class="w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="Ingrese una descripción para el movimiento">
-          </div>
-        </div>
-
-        <!-- Botão de Registro -->
-        <div class="mt-4">
-          <button 
-            (click)="registerMovement()"
-            [disabled]="!isFormValid()"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-            Registrar Movimiento
-          </button>
         </div>
       </div>
 
-      <!-- Histórico de Movimentações -->
-      <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6">
-          <h2 class="text-xl font-semibold text-gray-700 mb-4">Historial de Movimientos</h2>
-          
-          <!-- Filtro por Produto -->
-          <div class="mb-4">
-            <select 
-              [(ngModel)]="filterProductId"
-              (ngModelChange)="handleFilterChange($event)"
-              class="border border-gray-300 rounded-md shadow-sm p-2">
-              <option value="">Todos los productos</option>
-              @for (product of productService.filteredProducts(); track product.id) {
-                <option [value]="product.id">{{ product.name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <!-- Tabela de Movimentações -->
+      <!-- Lista de Productos -->
+      <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Anterior</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Final</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            @for (movement of filteredMovements(); track movement.id) {
+            @for (product of filteredProducts(); track product.id) {
               <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="h-10 w-10 flex-shrink-0">
+                      <img [src]="product.imageUrl" class="h-10 w-10 rounded-full object-cover" />
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
+                      <div class="text-sm text-gray-500">{{ product.brand }}</div>
+                    </div>
+                  </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ getProductName(movement.productId) }}
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ product.category }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span [class]="getMovementTypeClass(movement.type)">
-                    {{ getMovementTypeLabel(movement.type) }}
-                  </span>
+                  <app-tooltip [text]="getStockTooltip(product.stock)">
+                    <span [class]="getStockClass(product.stock)">
+                      {{ product.stock }}
+                    </span>
+                  </app-tooltip>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ movement.quantity }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ movement.previousStock }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ movement.currentStock }}
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-900">
-                  {{ movement.description }}
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <app-tooltip text="Registrar entrada de stock">
+                    <button
+                      (click)="openMovementModal(product, 'entrada')"
+                      class="text-green-600 hover:text-green-900 mr-4"
+                    >
+                      <fa-icon [icon]="faArrowUp"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Registrar salida de stock">
+                    <button
+                      (click)="openMovementModal(product, 'salida')"
+                      class="text-red-600 hover:text-red-900 mr-4"
+                    >
+                      <fa-icon [icon]="faArrowDown"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Ajustar stock">
+                    <button
+                      (click)="openMovementModal(product, 'ajuste')"
+                      class="text-yellow-600 hover:text-yellow-900"
+                    >
+                      <fa-icon [icon]="faSliders"></fa-icon>
+                    </button>
+                  </app-tooltip>
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+
+      <!-- Modal de Movimentação -->
+      @if (showModal()) {
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+          <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">
+              {{ getMovementTitle(selectedMovementType) }}
+            </h2>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                Producto
+              </label>
+              <p class="text-gray-600">{{ selectedProduct?.name }}</p>
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                Cantidad
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="movementQuantity"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                Descripción
+              </label>
+              <textarea
+                [(ngModel)]="movementDescription"
+                rows="3"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              ></textarea>
+            </div>
+            <div class="flex justify-end gap-4">
+              <button
+                (click)="closeModal()"
+                class="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancelar
+              </button>
+              <button
+                (click)="saveMovement()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                [disabled]="!isValidMovement()"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
-  `
+  `,
+  styles: ``
 })
-export class StockComponent implements OnInit {
-  // Form fields
-  selectedProductId = signal<string>('');
-  movementType = signal<StockMovementType>('entrada');
-  quantity = signal<number>(0);
-  description = signal<string>('');
-  filterProductId = signal<string>('');
+export class StockComponent {
+  // Ícones
+  faArrowUp = faArrowUp;
+  faArrowDown = faArrowDown;
+  faSliders = faSliders;
+
+  // Estado do componente
+  searchTerm = signal('');
+  selectedCategory = signal('');
+  showModal = signal(false);
+  selectedProduct: Product | null = null;
+  selectedMovementType: StockMovementType | null = null;
+  movementQuantity = 0;
+  movementDescription = '';
 
   constructor(
-    protected productService: ProductService,
+    private productService: ProductService,
     private stockService: StockService
   ) {}
 
-  ngOnInit() {
-    this.productService.loadMockData();
-    this.stockService.loadMockData();
-  }
+  // Computed properties
+  categories = computed(() => {
+    const products = this.productService.getProducts()();
+    return [...new Set(products.map(p => p.category))].sort();
+  });
 
-  // Computed values
-  filteredMovements = signal<any[]>([]);
+  filteredProducts = computed(() => {
+    let products = this.productService.getProducts()();
+    
+    // Filtrar por termo de busca
+    if (this.searchTerm()) {
+      const term = this.searchTerm().toLowerCase();
+      products = products.filter(p => 
+        p.name.toLowerCase().includes(term) ||
+        p.description.toLowerCase().includes(term) ||
+        p.brand.toLowerCase().includes(term)
+      );
+    }
 
-  handleProductChange(productId: string) {
-    this.selectedProductId.set(productId);
-  }
+    // Filtrar por categoria
+    if (this.selectedCategory()) {
+      products = products.filter(p => p.category === this.selectedCategory());
+    }
 
-  handleFilterChange(productId: string) {
-    this.filterProductId.set(productId);
-    this.updateFilteredMovements();
-  }
+    return products;
+  });
 
-  updateFilteredMovements() {
-    const productId = this.filterProductId();
-    if (productId) {
-      this.filteredMovements.set(this.stockService.getMovementsByProduct(productId));
+  // Métodos auxiliares
+  getStockClass(stock: number): string {
+    if (stock <= 10) {
+      return 'px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800';
+    } else if (stock <= 20) {
+      return 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800';
     } else {
-      this.filteredMovements.set(this.stockService.recentMovements());
+      return 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
     }
   }
 
-  isFormValid(): boolean {
+  getMovementTitle(type: StockMovementType | null): string {
+    switch (type) {
+      case 'entrada':
+        return 'Registrar Entrada';
+      case 'salida':
+        return 'Registrar Salida';
+      case 'ajuste':
+        return 'Ajustar Stock';
+      default:
+        return 'Movimiento de Stock';
+    }
+  }
+
+  getStockTooltip(stock: number): string {
+    if (stock <= 10) {
+      return 'Stock crítico';
+    } else if (stock <= 20) {
+      return 'Stock bajo';
+    } else {
+      return 'Stock normal';
+    }
+  }
+
+  // Métodos de manipulação do modal
+  openMovementModal(product: Product, type: StockMovementType) {
+    this.selectedProduct = product;
+    this.selectedMovementType = type;
+    this.movementQuantity = 0;
+    this.movementDescription = '';
+    this.showModal.set(true);
+  }
+
+  closeModal() {
+    this.showModal.set(false);
+    this.selectedProduct = null;
+    this.selectedMovementType = null;
+    this.movementQuantity = 0;
+    this.movementDescription = '';
+  }
+
+  isValidMovement(): boolean {
     return !!(
-      this.selectedProductId() &&
-      this.movementType() &&
-      this.quantity() > 0 &&
-      this.description()
+      this.selectedProduct &&
+      this.selectedMovementType &&
+      this.movementQuantity > 0 &&
+      this.movementDescription.trim()
     );
   }
 
-  registerMovement() {
-    if (!this.isFormValid()) return;
+  saveMovement() {
+    if (!this.selectedProduct || !this.selectedMovementType || !this.isValidMovement()) {
+      return;
+    }
 
     try {
-      this.stockService.registerMovement(
-        this.selectedProductId(),
-        this.movementType(),
-        this.quantity(),
-        this.description(),
-        'admin' // TODO: Implementar autenticação
+      this.stockService.addStockMovement(
+        this.selectedProduct.id,
+        this.selectedMovementType,
+        this.movementQuantity,
+        this.movementDescription
       );
-
-      // Reset form
-      this.selectedProductId.set('');
-      this.movementType.set('entrada');
-      this.quantity.set(0);
-      this.description.set('');
-
-      // Update filtered movements
-      this.updateFilteredMovements();
+      this.closeModal();
     } catch (error) {
+      // Em um ambiente real, você deve mostrar uma mensagem de erro apropriada
       console.error('Error al registrar movimiento:', error);
-      // TODO: Implementar notificação de erro
     }
-  }
-
-  getProductName(productId: string): string {
-    return this.productService.getProduct(productId)?.name || 'Producto no encontrado';
-  }
-
-  getMovementTypeLabel(type: string): string {
-    const labels = {
-      'entrada': 'Entrada',
-      'salida': 'Salida',
-      'ajuste': 'Ajuste'
-    };
-    return labels[type as keyof typeof labels];
-  }
-
-  getMovementTypeClass(type: string): string {
-    const classes = {
-      'entrada': 'inline-flex px-2 text-xs font-semibold rounded-full bg-green-100 text-green-800',
-      'salida': 'inline-flex px-2 text-xs font-semibold rounded-full bg-red-100 text-red-800',
-      'ajuste': 'inline-flex px-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-800'
-    };
-    return classes[type as keyof typeof classes];
   }
 } 

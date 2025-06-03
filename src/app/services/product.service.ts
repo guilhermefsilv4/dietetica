@@ -1,98 +1,137 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Product } from '@interfaces/product.interface';
+import { MOCK_PRODUCTS } from '@app/mocks/products.mock';
+import { HttpService } from './http.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  // Signals
-  private readonly products = signal<Product[]>([]);
-  private readonly selectedCategory = signal<string>('');
-  private readonly searchTerm = signal<string>('');
+  private products = signal<Product[]>(MOCK_PRODUCTS);
+  private productsDb = signal<Product[]>([]);
 
-  // Computed values
-  readonly filteredProducts = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    const category = this.selectedCategory();
-    
-    return this.products().filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(term) ||
-                          product.description.toLowerCase().includes(term);
-      const matchesCategory = !category || product.category === category;
-      
-      return matchesSearch && matchesCategory;
-    });
-  });
+  constructor(private http: HttpService) {
+    this.loadProductsDb();
+  }
 
-  readonly lowStockProducts = computed(() => {
-    return this.products().filter(product => product.stock < 10);
-  });
+  // Métodos para produtos mock
+  getProducts() {
+    return this.products;
+  }
 
-  readonly totalProducts = computed(() => this.products().length);
-
-  // Methods
-  getProduct(id: string): Product | undefined {
+  getProductById(id: string) {
     return this.products().find(product => product.id === id);
   }
 
-  addProduct(product: Product) {
-    this.products.update(products => [...products, product]);
+  addProduct(product: Omit<Product, 'id'>) {
+    const newProduct: Product = {
+      ...product,
+      id: Math.random().toString(36).substr(2, 9)
+    };
+
+    this.products.update(products => [...products, newProduct]);
+    return newProduct;
   }
 
-  updateProduct(updatedProduct: Product) {
+  updateProduct(id: string, product: Partial<Product>) {
     this.products.update(products =>
-      products.map(product =>
-        product.id === updatedProduct.id ? updatedProduct : product
-      )
+      products.map(p => p.id === id ? { ...p, ...product } : p)
     );
   }
 
-  updateProductStock(productId: string, newStock: number) {
-    const product = this.getProduct(productId);
-    if (product) {
-      this.updateProduct({ ...product, stock: newStock });
+  deleteProduct(id: string) {
+    this.products.update(products => products.filter(p => p.id !== id));
+  }
+
+  getLowStockProducts(threshold?: number) {
+    return this.products().filter(product =>
+      product.stock <= (threshold || product.minStock)
+    );
+  }
+
+  getProductsByCategory(category: string) {
+    return this.products().filter(product => product.category === category);
+  }
+
+  searchProducts(query: string) {
+    const searchTerm = query.toLowerCase();
+    return this.products().filter(product =>
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.description.toLowerCase().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm) ||
+      product.brand.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // Métodos para produtos do banco SQLite
+  getProductsDb() {
+    return this.productsDb;
+  }
+
+  async loadProductsDb() {
+    try {
+      const products = await this.http.get<Product[]>('products');
+      this.productsDb.set(products);
+    } catch (error) {
+      console.error('Erro ao carregar produtos do banco:', error);
+      this.productsDb.set([]);
     }
   }
 
-  deleteProduct(productId: string) {
-    this.products.update(products =>
-      products.filter(product => product.id !== productId)
+  getProductByIdDb(id: string) {
+    return this.productsDb().find(product => product.id === id);
+  }
+
+  async addProductDb(product: Omit<Product, 'id'>) {
+    try {
+      const newProduct = await this.http.post<Product>('products', product);
+      this.productsDb.update(products => [...products, newProduct]);
+      return newProduct;
+    } catch (error) {
+      console.error('Erro ao adicionar produto no banco:', error);
+      throw error;
+    }
+  }
+
+  async updateProductDb(id: string, product: Partial<Product>) {
+    try {
+      const updatedProduct = await this.http.put<Product>(`products/${id}`, product);
+      this.productsDb.update(products =>
+        products.map(p => p.id === id ? updatedProduct : p)
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar produto no banco:', error);
+      throw error;
+    }
+  }
+
+  async deleteProductDb(id: string) {
+    try {
+      await this.http.delete(`products/${id}`);
+      this.productsDb.update(products => products.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Erro ao deletar produto no banco:', error);
+      throw error;
+    }
+  }
+
+  getLowStockProductsDb(threshold?: number) {
+    return this.productsDb().filter(product =>
+      product.stock <= (threshold || product.minStock)
     );
   }
 
-  setSelectedCategory(category: string) {
-    this.selectedCategory.set(category);
+  getProductsByCategoryDb(category: string) {
+    return this.productsDb().filter(product => product.category === category);
   }
 
-  setSearchTerm(term: string) {
-    this.searchTerm.set(term);
-  }
-
-  // Mock data for testing
-  loadMockData() {
-    const mockProducts: Product[] = [
-      {
-        id: '1',
-        name: 'Semillas de Chía',
-        description: 'Semillas orgánicas de chía ricas en omega-3',
-        price: 250,
-        stock: 50,
-        category: 'Semillas',
-        brand: 'NaturalSeeds',
-        imageUrl: '/assets/images/chia-seeds.jpg'
-      },
-      {
-        id: '2',
-        name: 'Almendras',
-        description: 'Almendras naturales sin sal',
-        price: 450,
-        stock: 8,
-        category: 'Frutos Secos',
-        brand: 'NutriNuts',
-        imageUrl: '/assets/images/almonds.jpg'
-      }
-    ];
-
-    this.products.set(mockProducts);
+  searchProductsDb(query: string) {
+    const searchTerm = query.toLowerCase();
+    return this.productsDb().filter(product =>
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.description.toLowerCase().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm) ||
+      product.brand.toLowerCase().includes(searchTerm)
+    );
   }
 } 
