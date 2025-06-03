@@ -5,15 +5,38 @@ import { CashClosingService } from '@services/cash-closing.service';
 import { PaymentMethod } from '@interfaces/payment.interface';
 import { CashClosing } from '@interfaces/cash-closing.interface';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {
+  faCashRegister,
+  faMoneyBill,
+  faCreditCard,
+  faQrcode,
+  faMobileAlt,
+  faHistory,
+  faCheck,
+  faExclamationTriangle,
+  faClockRotateLeft
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-cash-closing',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, ConfirmationModalComponent, FontAwesomeModule],
   templateUrl: './cash-closing.component.html'
 })
 export class CashClosingComponent {
   private cashClosingService = inject(CashClosingService);
+
+  // Ícones
+  protected faCashRegister = faCashRegister;
+  protected faMoneyBill = faMoneyBill;
+  protected faCreditCard = faCreditCard;
+  protected faQrcode = faQrcode;
+  protected faMobileAlt = faMobileAlt;
+  protected faHistory = faHistory;
+  protected faCheck = faCheck;
+  protected faExclamationTriangle = faExclamationTriangle;
+  protected faClockRotateLeft = faClockRotateLeft;
 
   // Estado do modal de confirmação
   showCloseConfirmation = signal(false);
@@ -30,6 +53,33 @@ export class CashClosingComponent {
   };
 
   notes: string = '';
+
+  getPaymentIcon(method: PaymentMethod) {
+    switch (method) {
+      case 'cash':
+        return this.faMoneyBill;
+      case 'debit':
+      case 'credit':
+        return this.faCreditCard;
+      case 'transfer':
+        return this.faMobileAlt;
+      case 'qr':
+        return this.faQrcode;
+      default:
+        return this.faMoneyBill;
+    }
+  }
+
+  getPaymentMethodName(method: string): string {
+    const methods: { [key: string]: string } = {
+      'cash': 'Efectivo',
+      'debit': 'Tarjeta de Débito',
+      'credit': 'Tarjeta de Crédito',
+      'transfer': 'Transferencia',
+      'qr': 'Pago QR'
+    };
+    return methods[method] || method;
+  }
 
   expectedAmountsArray = () => {
     const expected = this.cashClosingService.getExpectedAmounts();
@@ -77,4 +127,4 @@ export class CashClosingComponent {
     };
     this.notes = '';
   }
-} 
+}
