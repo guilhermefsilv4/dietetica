@@ -1,71 +1,163 @@
 <nav class="bg-white shadow-lg">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex justify-between h-16">
+      <!-- Logo e Menu Desktop -->
       <div class="flex">
         <div class="flex-shrink-0 flex items-center">
-          <span class="text-2xl font-bold text-green-600">La Buena Semilla</span>
+          <span class="text-xl md:text-2xl font-bold text-green-600">La Buena Semilla</span>
         </div>
-        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+        <!-- Menu Desktop -->
+        <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
           <a
             routerLink="/dashboard"
             routerLinkActive="border-green-500 text-gray-900"
             [routerLinkActiveOptions]="{ exact: true }"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
-            Panel de Control
+            <fa-icon [icon]="faDashboard" class="mr-2"></fa-icon>
+            Panel
           </a>
           <a
             routerLink="/products"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
+            <fa-icon [icon]="faBox" class="mr-2"></fa-icon>
             Productos
           </a>
           <a
             routerLink="/stock"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
+            <fa-icon [icon]="faBoxes" class="mr-2"></fa-icon>
             Stock
           </a>
           <a
             routerLink="/sales"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
+            <fa-icon [icon]="faShoppingCart" class="mr-2"></fa-icon>
             Ventas
           </a>
           <a
             routerLink="/customers"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
+            <fa-icon [icon]="faUsers" class="mr-2"></fa-icon>
             Clientes
           </a>
           <a
             routerLink="/tickets"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
+            <fa-icon [icon]="faReceipt" class="mr-2"></fa-icon>
             Tickets
           </a>
           <a
             routerLink="/cash-closing"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
-            Cierre de Caja
+            <fa-icon [icon]="faCashRegister" class="mr-2"></fa-icon>
+            Caja
           </a>
         </div>
       </div>
-      <div class="hidden sm:ml-6 sm:flex sm:items-center">
-        <button class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
+
+      <!-- Botões da direita -->
+      <div class="flex items-center">
+        <!-- Notificações -->
+        <button class="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500">
           <span class="sr-only">Ver notificaciones</span>
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
+          <fa-icon [icon]="faBell" class="h-6 w-6"></fa-icon>
+        </button>
+
+        <!-- Botão Menu Mobile -->
+        <button
+          (click)="toggleMobileMenu()"
+          class="lg:hidden ml-2 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <span class="sr-only">Abrir menu</span>
+          <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" class="h-6 w-6"></fa-icon>
         </button>
       </div>
     </div>
+
+    <!-- Menu Mobile -->
+    <div
+      class="lg:hidden"
+      [class.hidden]="!mobileMenuOpen()"
+    >
+      <div class="pt-2 pb-3 space-y-1">
+        <a
+          routerLink="/dashboard"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faDashboard" class="mr-3"></fa-icon>
+          Panel de Control
+        </a>
+        <a
+          routerLink="/products"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faBox" class="mr-3"></fa-icon>
+          Productos
+        </a>
+        <a
+          routerLink="/stock"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faBoxes" class="mr-3"></fa-icon>
+          Stock
+        </a>
+        <a
+          routerLink="/sales"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faShoppingCart" class="mr-3"></fa-icon>
+          Ventas
+        </a>
+        <a
+          routerLink="/customers"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faUsers" class="mr-3"></fa-icon>
+          Clientes
+        </a>
+        <a
+          routerLink="/tickets"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faReceipt" class="mr-3"></fa-icon>
+          Tickets
+        </a>
+        <a
+          routerLink="/cash-closing"
+          routerLinkActive="bg-green-50 border-green-500 text-green-700"
+          class="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+          (click)="closeMobileMenu()"
+        >
+          <fa-icon [icon]="faCashRegister" class="mr-3"></fa-icon>
+          Cierre de Caja
+        </a>
+      </div>
+    </div>
   </div>
-</nav> 
+</nav>
