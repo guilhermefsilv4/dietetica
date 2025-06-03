@@ -19,7 +19,7 @@ export class HttpService {
 
   private transformSingleItem(item: any): any {
     if (!item || typeof item !== 'object') return item;
-    
+
     const transformed = { ...item };
     if ('image_url' in transformed) {
       transformed.imageUrl = transformed.image_url;
@@ -32,10 +32,28 @@ export class HttpService {
     if (!data || typeof data !== 'object') return data;
 
     const transformed = { ...data };
+
+    // Mapeamento de campos específicos
     if ('imageUrl' in transformed) {
       transformed.image_url = transformed.imageUrl;
       delete transformed.imageUrl;
     }
+    if ('saleType' in transformed) {
+      transformed.sale_type = transformed.saleType;
+      delete transformed.saleType;
+    }
+    if ('minStock' in transformed) {
+      transformed.min_stock = transformed.minStock;
+      delete transformed.minStock;
+    }
+
+    // Remover campos que não existem no banco
+    delete transformed.weightUnit;
+    delete transformed.variants;
+    delete transformed.hasVariants;
+    delete transformed.createdAt;
+    delete transformed.updatedAt;
+
     return transformed;
   }
 
@@ -79,4 +97,4 @@ export class HttpService {
       throw error;
     }
   }
-} 
+}

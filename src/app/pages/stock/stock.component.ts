@@ -123,22 +123,29 @@ export class StockComponent {
     );
   }
 
-  saveMovement() {
+  async saveMovement() {
     if (!this.selectedProduct || !this.selectedMovementType || !this.isValidMovement()) {
       return;
     }
 
     try {
-      this.stockService.addStockMovementDb(
+      await this.stockService.addStockMovementDb(
         this.selectedProduct.id,
         this.selectedMovementType,
         this.movementQuantity,
         this.movementDescription
       );
+
+      // Atualiza a lista de movimentações
+      await this.stockService.loadStockMovementsDb();
+
       this.closeModal();
+      // TODO: Adicionar um componente de toast/notificação para feedback
+      console.log('Movimentação registrada com sucesso!');
     } catch (error) {
-      // Em um ambiente real, você deve mostrar uma mensagem de erro apropriada
-      console.error('Error al registrar movimiento:', error);
+      console.error('Erro ao registrar movimentação:', error);
+      // TODO: Adicionar um componente de toast/notificação para erros
+      alert('Erro ao registrar movimentação. Por favor, tente novamente.');
     }
   }
 }

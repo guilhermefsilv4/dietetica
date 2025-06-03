@@ -95,6 +95,16 @@ export class ProductService {
 
   async updateProductDb(id: string, product: Partial<Product>) {
     try {
+      // Se for apenas atualização de estoque, enviar somente o campo stock
+      if (Object.keys(product).length === 1 && 'stock' in product) {
+        const updatedProduct = await this.http.put<Product>(`products/${id}`, { stock: product.stock });
+        this.productsDb.update(products =>
+          products.map(p => p.id === id ? { ...p, stock: updatedProduct.stock } : p)
+        );
+        return;
+      }
+
+      // Caso contrário, enviar todos os campos atualizados
       const updatedProduct = await this.http.put<Product>(`products/${id}`, product);
       this.productsDb.update(products =>
         products.map(p => p.id === id ? updatedProduct : p)
@@ -134,4 +144,4 @@ export class ProductService {
       product.brand.toLowerCase().includes(searchTerm)
     );
   }
-} 
+}

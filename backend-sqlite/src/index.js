@@ -118,6 +118,32 @@ app.post('/api/products', (req, res) => {
 
 app.put('/api/products/:id', (req, res) => {
   const dbProduct = mapToDb(req.body);
+
+  // Se for apenas atualização de estoque
+  if (Object.keys(dbProduct).length === 1 && 'stock' in dbProduct) {
+    db.run(
+      'UPDATE products SET stock = ? WHERE id = ?',
+      [dbProduct.stock, req.params.id],
+      (err) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+
+        // Retorna o produto atualizado
+        db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, row) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          res.json(mapToApi(row));
+        });
+      }
+    );
+    return;
+  }
+
+  // Atualização completa do produto
   const {
     barcode,
     name,
@@ -133,16 +159,16 @@ app.put('/api/products/:id', (req, res) => {
 
   db.run(
     `UPDATE products SET
-      barcode = ?,
-      name = ?,
-      brand = ?,
-      category = ?,
-      description = ?,
-      sale_type = ?,
-      price = ?,
-      stock = ?,
-      min_stock = ?,
-      image_url = ?
+      barcode = COALESCE(?, barcode),
+      name = COALESCE(?, name),
+      brand = COALESCE(?, brand),
+      category = COALESCE(?, category),
+      description = COALESCE(?, description),
+      sale_type = COALESCE(?, sale_type),
+      price = COALESCE(?, price),
+      stock = COALESCE(?, stock),
+      min_stock = COALESCE(?, min_stock),
+      image_url = COALESCE(?, image_url)
     WHERE id = ?`,
     [barcode, name, brand, category, description, sale_type, price, stock, min_stock, image_url, req.params.id],
     (err) => {
@@ -151,12 +177,14 @@ app.put('/api/products/:id', (req, res) => {
         return;
       }
 
-      // Retorna o produto no formato da API
-      const apiProduct = mapToApi({
-        id: req.params.id,
-        ...dbProduct
+      // Retorna o produto atualizado
+      db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, row) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.json(mapToApi(row));
       });
-      res.json(apiProduct);
     }
   );
 });
