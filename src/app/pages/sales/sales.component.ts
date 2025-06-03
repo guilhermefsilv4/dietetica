@@ -3,246 +3,31 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
-import { CurrencyArPipe } from '@pipes/currency-ar.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TooltipComponent } from '@components/tooltip/tooltip.component';
-
-interface SaleItem {
-  productId: string;
-  quantity: number;
-  price: number;
-  subtotal: number;
-}
-
-interface Sale {
-  id: string;
-  date: Date;
-  items: SaleItem[];
-  total: number;
-  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
-  status: 'completada' | 'cancelada';
-}
+import { SaleService } from '@services/sale.service';
+import { TicketService } from '@services/ticket.service';
+import { Sale, SaleItem } from '@interfaces/sale.interface';
+import { Payment, PaymentMethod } from '@interfaces/payment.interface';
+import { ProductVariant } from '@interfaces/product-variant.interface';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyArPipe, FontAwesomeModule, TooltipComponent],
-  template: `
-    <div class="container mx-auto px-4 py-8">
-      <!-- Header com botão de nova venda -->
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Ventas</h1>
-        <button
-          (click)="startNewSale()"
-          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-        >
-          Nueva Venta
-        </button>
-      </div>
-
-      <!-- Resumo de Vendas -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">Ventas de Hoy</h3>
-          <p class="text-3xl font-bold text-blue-600">{{ todaySalesCount() }}</p>
-          <p class="text-sm text-gray-500">Total: {{ todaySalesTotal() | currencyAr }}</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">Ventas del Mes</h3>
-          <p class="text-3xl font-bold text-green-600">{{ monthSalesCount() }}</p>
-          <p class="text-sm text-gray-500">Total: {{ monthSalesTotal() | currencyAr }}</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">Ticket Promedio</h3>
-          <p class="text-3xl font-bold text-purple-600">{{ averageTicket() | currencyAr }}</p>
-        </div>
-      </div>
-
-      @if (isNewSale()) {
-        <!-- Nova Venda -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Nueva Venta</h2>
-          
-          <!-- Adicionar Produto -->
-          <div class="flex gap-4 mb-6">
-            <div class="flex-1">
-              <select
-                [(ngModel)]="selectedProductId"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Seleccionar producto</option>
-                @for (product of availableProducts(); track product.id) {
-                  <option [value]="product.id">{{ product.name }} - {{ product.price | currencyAr }}</option>
-                }
-              </select>
-            </div>
-            <div class="w-32">
-              <input
-                type="number"
-                [(ngModel)]="selectedQuantity"
-                min="1"
-                placeholder="Cantidad"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              (click)="addItemToSale()"
-              [disabled]="!canAddItem()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              Agregar
-            </button>
-          </div>
-
-          <!-- Lista de Itens -->
-          <div class="mb-6">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                @for (item of currentSaleItems(); track item.productId) {
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ getProductName(item.productId) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.quantity }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.price | currencyAr }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.subtotal | currencyAr }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <app-tooltip text="Eliminar producto de la venta">
-                        <button
-                          (click)="removeItem(item.productId)"
-                          class="text-red-600 hover:text-red-900"
-                        >
-                          <fa-icon [icon]="faTrash"></fa-icon>
-                        </button>
-                      </app-tooltip>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-              <tfoot class="bg-gray-50">
-                <tr>
-                  <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    Total:
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {{ currentSaleTotal() | currencyAr }}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- Finalizar Venda -->
-          <div class="flex justify-between items-center">
-            <div class="flex gap-4">
-              <select
-                [(ngModel)]="selectedPaymentMethod"
-                class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Método de pago</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta">Tarjeta</option>
-                <option value="transferencia">Transferencia</option>
-              </select>
-            </div>
-            <div class="flex gap-4">
-              <button
-                (click)="cancelSale()"
-                class="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancelar
-              </button>
-              <button
-                (click)="finalizeSale()"
-                [disabled]="!canFinalizeSale()"
-                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-              >
-                Finalizar Venta
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- Histórico de Vendas -->
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Historial de Ventas</h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              @for (sale of recentSales(); track sale.id) {
-                <tr>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ sale.date | date:'dd/MM/yyyy HH:mm' }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <app-tooltip text="Cantidad de productos">
-                      {{ sale.items.length }} items
-                    </app-tooltip>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <app-tooltip text="Total de la venta">
-                      {{ sale.total | currencyAr }}
-                    </app-tooltip>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <app-tooltip text="Método de pago utilizado">
-                      {{ sale.paymentMethod }}
-                    </app-tooltip>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <app-tooltip [text]="getStatusTooltip(sale.status)">
-                      <span [class]="getSaleStatusClass(sale.status)">
-                        {{ sale.status }}
-                      </span>
-                    </app-tooltip>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: ``
+  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  templateUrl: './sales.component.html',
+  styles: []
 })
 export class SalesComponent {
   // Ícones
   faTrash = faTrash;
 
   // Estado do componente
-  isNewSale = signal(false);
-  selectedProductId = '';
-  selectedQuantity = 1;
-  selectedPaymentMethod: Sale['paymentMethod'] | '' = '';
-  currentSaleItems = signal<SaleItem[]>([]);
+  currentSale = computed(() => this.saleService.getCurrentSale()());
+  barcodeInput = '';
+  quantityInput = 1;
+  selectedPaymentMethod: PaymentMethod = 'cash';
+  paymentAmount = 0;
 
   // Mock de vendas usando signal
   private mockSales = signal<Sale[]>([
@@ -250,15 +35,26 @@ export class SalesComponent {
       id: '1',
       date: new Date(),
       items: [
-        { productId: '1', quantity: 2, price: 100, subtotal: 200 }
+        { 
+          id: '1',
+          productId: '1', 
+          quantity: 2, 
+          unitPrice: 100, 
+          subtotal: 200 
+        }
       ],
+      subtotal: 200,
       total: 200,
-      paymentMethod: 'efectivo',
-      status: 'completada'
+      payments: [],
+      status: 'completed'
     }
   ]);
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private saleService: SaleService,
+    private ticketService: TicketService
+  ) {}
 
   // Computed properties
   availableProducts = computed(() => {
@@ -270,7 +66,9 @@ export class SalesComponent {
   });
 
   currentSaleTotal = computed(() => {
-    return this.currentSaleItems().reduce((total, item) => total + item.subtotal, 0);
+    const sale = this.currentSale();
+    if (!sale) return 0;
+    return sale.items.reduce((total: number, item: SaleItem) => total + item.subtotal, 0);
   });
 
   todaySalesCount = computed(() => {
@@ -325,9 +123,9 @@ export class SalesComponent {
   getSaleStatusClass(status: Sale['status']): string {
     const baseClass = 'px-2 py-1 text-xs font-medium rounded-full';
     switch (status) {
-      case 'completada':
+      case 'completed':
         return `${baseClass} bg-green-100 text-green-800`;
-      case 'cancelada':
+      case 'cancelled':
         return `${baseClass} bg-red-100 text-red-800`;
       default:
         return baseClass;
@@ -336,9 +134,9 @@ export class SalesComponent {
 
   getStatusTooltip(status: Sale['status']): string {
     switch (status) {
-      case 'completada':
+      case 'completed':
         return 'Venta finalizada con éxito';
-      case 'cancelada':
+      case 'cancelled':
         return 'Venta cancelada';
       default:
         return 'Estado desconocido';
@@ -346,99 +144,112 @@ export class SalesComponent {
   }
 
   // Métodos de manipulação da venda
-  startNewSale() {
-    this.isNewSale.set(true);
-    this.currentSaleItems.set([]);
-    this.selectedProductId = '';
-    this.selectedQuantity = 1;
-    this.selectedPaymentMethod = '';
+  startNewSale(): void {
+    this.saleService.startNewSale();
+    this.resetInputs();
   }
 
-  canAddItem(): boolean {
-    if (!this.selectedProductId || this.selectedQuantity < 1) return false;
-    const product = this.productService.getProductById(this.selectedProductId);
-    return !!(product && product.stock >= this.selectedQuantity);
+  cancelSale(): void {
+    if (confirm('¿Está seguro que desea cancelar la venta?')) {
+      this.saleService.cancelSale();
+      this.resetInputs();
+    }
   }
 
-  addItemToSale() {
-    if (!this.canAddItem()) return;
+  // Métodos de produtos
+  searchByBarcode(): void {
+    if (!this.barcodeInput.trim()) return;
 
-    const product = this.productService.getProductById(this.selectedProductId);
-    if (!product) return;
-
-    const newItem: SaleItem = {
-      productId: product.id,
-      quantity: this.selectedQuantity,
-      price: product.price,
-      subtotal: product.price * this.selectedQuantity
-    };
-
-    const currentItems = this.currentSaleItems();
-    const existingItemIndex = currentItems.findIndex(item => item.productId === product.id);
-
-    if (existingItemIndex >= 0) {
-      // Atualiza item existente
-      const updatedItems = [...currentItems];
-      const existingItem = updatedItems[existingItemIndex];
-      updatedItems[existingItemIndex] = {
-        ...existingItem,
-        quantity: existingItem.quantity + this.selectedQuantity,
-        subtotal: existingItem.price * (existingItem.quantity + this.selectedQuantity)
-      };
-      this.currentSaleItems.set(updatedItems);
+    const result = this.saleService.findProductByBarcode(this.barcodeInput);
+    if (result) {
+      const { product, variant } = result;
+      this.addProductToSale(product, variant);
+      this.barcodeInput = '';
     } else {
-      // Adiciona novo item
-      this.currentSaleItems.set([...currentItems, newItem]);
+      alert('Producto no encontrado');
+    }
+  }
+
+  addProductToSale(product: Product, variant?: ProductVariant): void {
+    this.saleService.addItem(product, this.quantityInput, variant);
+    this.quantityInput = 1;
+  }
+
+  removeItem(itemId: string): void {
+    this.saleService.removeItem(itemId);
+  }
+
+  updateItemQuantity(itemId: string, quantity: number): void {
+    if (quantity > 0) {
+      this.saleService.updateItemQuantity(itemId, quantity);
+    }
+  }
+
+  // Métodos de pagamento
+  addPayment(): void {
+    if (this.paymentAmount <= 0) {
+      alert('Ingrese un monto válido');
+      return;
     }
 
-    // Limpa seleção
-    this.selectedProductId = '';
-    this.selectedQuantity = 1;
+    this.saleService.addPayment(
+      this.selectedPaymentMethod,
+      this.paymentAmount
+    );
+
+    this.paymentAmount = 0;
   }
 
-  removeItem(productId: string) {
-    const currentItems = this.currentSaleItems();
-    this.currentSaleItems.set(currentItems.filter(item => item.productId !== productId));
-  }
-
-  canFinalizeSale(): boolean {
-    return this.currentSaleItems().length > 0 && !!this.selectedPaymentMethod;
-  }
-
-  finalizeSale() {
-    if (!this.canFinalizeSale()) return;
-
-    const newSale: Sale = {
-      id: Date.now().toString(),
-      date: new Date(),
-      items: this.currentSaleItems(),
-      total: this.currentSaleTotal(),
-      paymentMethod: this.selectedPaymentMethod as Sale['paymentMethod'],
-      status: 'completada'
+  getPaymentMethodName(method: string): string {
+    const methods: { [key: string]: string } = {
+      'cash': 'Efectivo',
+      'debit': 'Tarjeta de Débito',
+      'credit': 'Tarjeta de Crédito',
+      'transfer': 'Transferencia',
+      'qr': 'Pago QR'
     };
-
-    // Atualiza a lista de vendas usando o signal
-    this.mockSales.update(sales => [newSale, ...sales]);
-
-    // Atualiza o estoque
-    for (const item of newSale.items) {
-      const product = this.productService.getProductById(item.productId);
-      if (product) {
-        this.productService.updateProduct(product.id, {
-          ...product,
-          stock: product.stock - item.quantity
-        });
-      }
-    }
-
-    this.cancelSale();
+    return methods[method] || method;
   }
 
-  cancelSale() {
-    this.isNewSale.set(false);
-    this.currentSaleItems.set([]);
-    this.selectedProductId = '';
-    this.selectedQuantity = 1;
-    this.selectedPaymentMethod = '';
+  getTotalPaid(): number {
+    const sale = this.currentSale();
+    if (!sale) return 0;
+    return sale.payments.reduce((sum: number, payment: Payment) => sum + payment.amount, 0);
+  }
+
+  getChange(): number {
+    return this.saleService.calculateChange();
+  }
+
+  getRemainingAmount(): number {
+    const sale = this.currentSale();
+    if (!sale) return 0;
+    return Math.max(0, sale.total - this.getTotalPaid());
+  }
+
+  canCompleteSale(): boolean {
+    const sale = this.currentSale();
+    if (!sale) return false;
+    return sale.items.length > 0 && this.getTotalPaid() >= sale.total;
+  }
+
+  async completeSale(): Promise<void> {
+    try {
+      const completedSale = this.saleService.completeSale();
+      if (completedSale) {
+        await this.ticketService.printTicket(completedSale);
+        this.resetInputs();
+      }
+    } catch (error) {
+      alert('Error al completar la venta: ' + (error as Error).message);
+    }
+  }
+
+  // Métodos auxiliares
+  private resetInputs(): void {
+    this.barcodeInput = '';
+    this.quantityInput = 1;
+    this.paymentAmount = 0;
+    this.selectedPaymentMethod = 'cash';
   }
 } 

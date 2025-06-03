@@ -1,3 +1,5 @@
+import { ProductVariant } from './product-variant.interface';
+
 export interface Product {
   id: string;
   barcode: string;
@@ -11,4 +13,6 @@ export interface Product {
   weightUnit?: 'kg' | 'g';
   brand: string;
   imageUrl: string;
+  variants?: ProductVariant[];
+  hasVariants: boolean;
 } 
