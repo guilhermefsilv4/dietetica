@@ -89,3 +89,19 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sale_id) REFERENCES sales (id)
 );
+
+-- Tabela de fechamento de caixa
+CREATE TABLE IF NOT EXISTS cash_closings (
+    id TEXT PRIMARY KEY,
+    opened_at DATETIME NOT NULL,
+    closed_at DATETIME,
+    payments TEXT NOT NULL, -- JSON com os pagamentos
+    total_sales DECIMAL(10,2) NOT NULL,
+    total_expected DECIMAL(10,2) NOT NULL,
+    total_actual DECIMAL(10,2) NOT NULL,
+    difference DECIMAL(10,2) NOT NULL,
+    notes TEXT,
+    status TEXT CHECK (status IN ('open', 'closed')) NOT NULL,
+    closed_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

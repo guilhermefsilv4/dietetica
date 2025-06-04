@@ -93,6 +93,22 @@ const mapSaleItemToDb = (apiItem) => ({
   unit_price: apiItem.unitPrice
 });
 
+// Funções auxiliares para mapear dados de cash-closing
+const mapCashClosingToApi = (dbClosing) => ({
+  id: dbClosing.id,
+  openedAt: dbClosing.opened_at,
+  closedAt: dbClosing.closed_at,
+  payments: JSON.parse(dbClosing.payments),
+  totalSales: dbClosing.total_sales,
+  totalExpected: dbClosing.total_expected,
+  totalActual: dbClosing.total_actual,
+  difference: dbClosing.difference,
+  notes: dbClosing.notes,
+  status: dbClosing.status,
+  closedBy: dbClosing.closed_by,
+  createdAt: dbClosing.created_at
+});
+
 // Rotas
 app.get('/api/products', (req, res) => {
   db.all('SELECT * FROM products', [], (err, rows) => {
@@ -546,6 +562,132 @@ app.put('/api/sales/:id', (req, res) => {
   }
 
   res.status(400).json({ error: 'Apenas atualização de status é permitida' });
+});
+
+// Rotas de fechamento de caixa
+app.get('/api/cash-closings', (req, res) => {
+  db.all('SELECT * FROM cash_closings ORDER BY closed_at DESC', [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows.map(mapCashClosingToApi));
+  });
+});
+
+app.get('/api/cash-closings/current', (req, res) => {
+  db.get('SELECT * FROM cash_closings WHERE status = "open" ORDER BY opened_at DESC LIMIT 1', [], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(row ? mapCashClosingToApi(row) : null);
+  });
+});
+
+app.post('/api/cash-closings', (req, res) => {
+  const {
+    id,
+    openedAt,
+    closedAt,
+    payments,
+    totalSales,
+    totalExpected,
+    totalActual,
+    difference,
+    notes,
+    status,
+    closedBy
+  } = req.body;
+
+  db.run(
+    `INSERT INTO cash_closings (
+      id, opened_at, closed_at, payments,
+      total_sales, total_expected, total_actual,
+      difference, notes, status, closed_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      openedAt,
+      closedAt,
+      JSON.stringify(payments),
+      totalSales,
+      totalExpected,
+      totalActual,
+      difference,
+      notes,
+      status,
+      closedBy
+    ],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      db.get('SELECT * FROM cash_closings WHERE id = ?', [id], (err, row) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.json(row);
+      });
+    }
+  );
+});
+
+app.put('/api/cash-closings/:id', (req, res) => {
+  const {
+    closedAt,
+    payments,
+    totalSales,
+    totalExpected,
+    totalActual,
+    difference,
+    notes,
+    status,
+    closedBy
+  } = req.body;
+
+  db.run(
+    `UPDATE cash_closings SET
+      closed_at = ?,
+      payments = ?,
+      total_sales = ?,
+      total_expected = ?,
+      total_actual = ?,
+      difference = ?,
+      notes = ?,
+      status = ?,
+      closed_by = ?
+    WHERE id = ?`,
+    [
+      closedAt,
+      JSON.stringify(payments),
+      totalSales,
+      totalExpected,
+      totalActual,
+      difference,
+      notes,
+      status,
+      closedBy,
+      req.params.id
+    ],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      db.get('SELECT * FROM cash_closings WHERE id = ?', [req.params.id], (err, row) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.json(row);
+      });
+    }
+  );
 });
 
 // Iniciar o servidor
