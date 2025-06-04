@@ -33,29 +33,6 @@ export class SalesComponent {
   // Estado do modal de confirmação
   showCancelConfirmation = signal(false);
 
-  // Mock de vendas usando signal
-  private mockSales = signal<Sale[]>([
-    {
-      id: '1',
-      date: new Date(),
-      items: [
-        {
-          id: '1',
-          productId: '1',
-          name: 'Produto Teste',
-          quantity: 2,
-          unitPrice: 100,
-          price: 100,
-          subtotal: 200
-        }
-      ],
-      subtotal: 200,
-      total: 200,
-      payments: [],
-      status: 'completed'
-    }
-  ]);
-
   // Formatador de moeda argentino
   private currencyFormatter = new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -82,7 +59,7 @@ export class SalesComponent {
   });
 
   recentSales = computed(() => {
-    return this.mockSales().slice(0, 10);
+    return this.saleService.getRecentSales()();
   });
 
   currentSaleTotal = computed(() => {
@@ -92,46 +69,25 @@ export class SalesComponent {
   });
 
   todaySalesCount = computed(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return this.mockSales().filter(sale => {
-      const saleDate = new Date(sale.date);
-      saleDate.setHours(0, 0, 0, 0);
-      return saleDate.getTime() === today.getTime();
-    }).length;
+    return this.saleService.getTodaySales()().length;
   });
 
   todaySalesTotal = computed(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return this.mockSales()
-      .filter(sale => {
-        const saleDate = new Date(sale.date);
-        saleDate.setHours(0, 0, 0, 0);
-        return saleDate.getTime() === today.getTime();
-      })
+    return this.saleService.getTodaySales()()
       .reduce((total, sale) => total + sale.total, 0);
   });
 
   monthSalesCount = computed(() => {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    return this.mockSales().filter(sale => new Date(sale.date) >= firstDayOfMonth).length;
+    return this.saleService.getMonthSales()().length;
   });
 
   monthSalesTotal = computed(() => {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    return this.mockSales()
-      .filter(sale => new Date(sale.date) >= firstDayOfMonth)
+    return this.saleService.getMonthSales()()
       .reduce((total, sale) => total + sale.total, 0);
   });
 
   averageTicket = computed(() => {
-    const sales = this.mockSales();
-    if (sales.length === 0) return 0;
-    const total = sales.reduce((sum, sale) => sum + sale.total, 0);
-    return total / sales.length;
+    return this.saleService.getAverageTicket()();
   });
 
   // Métodos auxiliares

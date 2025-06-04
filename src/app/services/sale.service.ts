@@ -41,6 +41,43 @@ export class SaleService {
     return computed(() => this.sales());
   }
 
+  // Buscar vendas recentes
+  getRecentSales() {
+    return computed(() => this.sales().slice(0, 10));
+  }
+
+  // Buscar vendas do dia
+  getTodaySales() {
+    return computed(() => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return this.sales().filter(sale => {
+        const saleDate = new Date(sale.date);
+        saleDate.setHours(0, 0, 0, 0);
+        return saleDate.getTime() === today.getTime();
+      });
+    });
+  }
+
+  // Buscar vendas do mês
+  getMonthSales() {
+    return computed(() => {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      return this.sales().filter(sale => new Date(sale.date) >= firstDayOfMonth);
+    });
+  }
+
+  // Calcular ticket médio
+  getAverageTicket() {
+    return computed(() => {
+      const sales = this.sales();
+      if (sales.length === 0) return 0;
+      const total = sales.reduce((sum, sale) => sum + sale.total, 0);
+      return total / sales.length;
+    });
+  }
+
   // Iniciar nova venda
   startNewSale() {
     const newSale: Sale = {
