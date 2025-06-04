@@ -92,10 +92,10 @@
                 />
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${{ item.unitPrice.toFixed(2) }}
+                {{ formatCurrency(item.unitPrice) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${{ item.subtotal.toFixed(2) }}
+                {{ formatCurrency(item.subtotal) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button
@@ -123,7 +123,7 @@
       <!-- Formas de Pagamento -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold mb-4">Formas de Pago</h2>
-        
+
         <div class="space-y-4">
           <div class="flex gap-4">
             <select
@@ -156,7 +156,7 @@
               @for (payment of currentSale()!.payments; track payment.id) {
                 <div class="flex justify-between items-center text-sm">
                   <span>{{ getPaymentMethodName(payment.method) }}</span>
-                  <span>${{ payment.amount.toFixed(2) }}</span>
+                  <span>{{ formatCurrency(payment.amount) }}</span>
                 </div>
               }
               @if (currentSale()!.payments.length === 0) {
@@ -172,13 +172,13 @@
       <!-- Resumo -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold mb-4">Resumen</h2>
-        
-        <div class="space-y-4">
+
+        <div class="space-y-2">
           <div class="flex justify-between items-center">
             <span class="text-gray-600">Subtotal:</span>
-            <span class="text-lg">${{ currentSale()!.subtotal.toFixed(2) }}</span>
+            <span class="font-medium">{{ formatCurrency(currentSaleTotal()) }}</span>
           </div>
-          
+
           <div class="flex justify-between items-center">
             <span class="text-gray-600">Total:</span>
             <span class="text-xl font-bold">${{ currentSale()!.total.toFixed(2) }}</span>
@@ -186,29 +186,41 @@
 
           <div class="flex justify-between items-center">
             <span class="text-gray-600">Total Pagado:</span>
-            <span class="text-lg">${{ getTotalPaid().toFixed(2) }}</span>
+            <span class="font-medium">{{ formatCurrency(getTotalPaid()) }}</span>
           </div>
 
-          @if (getChange() > 0) {
-            <div class="flex justify-between items-center text-green-600">
-              <span>Vuelto:</span>
-              <span class="text-lg">${{ getChange().toFixed(2) }}</span>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Restante:</span>
+            <span class="font-medium">{{ formatCurrency(getRemainingAmount()) }}</span>
+          </div>
+
+          @if (selectedPaymentMethod === 'cash' && paymentAmount > 0) {
+            <div class="mt-4 p-4 bg-green-50 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Pago en efectivo:</span>
+                <span class="font-medium">{{ formatCurrency(paymentAmount) }}</span>
+              </div>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-gray-700">Vuelto:</span>
+                <span class="font-medium text-green-600">{{ formatCurrency(paymentAmount - getRemainingAmount()) }}</span>
+              </div>
             </div>
           }
-
-          @if (getRemainingAmount() > 0) {
-            <div class="flex justify-between items-center text-red-600">
-              <span>Falta Pagar:</span>
-              <span class="text-lg">${{ getRemainingAmount().toFixed(2) }}</span>
+          @if (changeAmount() > 0) {
+            <div class="mt-4 p-4 bg-green-50 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700 font-medium">Vuelto Total:</span>
+                <span class="font-medium text-green-600">{{ formatCurrency(changeAmount()) }}</span>
+              </div>
             </div>
           }
 
           <button
             (click)="completeSale()"
-            class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 mt-4"
             [disabled]="!canCompleteSale()"
+            class="w-full mt-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Finalizar Venta
+            Completar Venta
           </button>
         </div>
       </div>
@@ -225,7 +237,7 @@
       <p class="text-gray-600 mb-6">
         Haga clic en "Nueva Venta" para comenzar una nueva transacción
       </p>
-      
+
       <!-- Estatísticas rápidas -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <div class="bg-gray-50 rounded-lg p-4">
@@ -254,4 +266,4 @@
     (confirm)="confirmCancelSale()"
     (cancel)="cancelCancelSale()"
   />
-</div> 
+</div>

@@ -39,7 +39,7 @@ export class SalesComponent {
       id: '1',
       date: new Date(),
       items: [
-        { 
+        {
           id: '1',
           productId: '1',
           name: 'Produto Teste',
@@ -55,6 +55,20 @@ export class SalesComponent {
       status: 'completed'
     }
   ]);
+
+  // Formatador de moeda argentino
+  private currencyFormatter = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2
+  });
+
+  // Computed para calcular o troco em tempo real
+  changeAmount = computed(() => {
+    const totalPaid = this.getTotalPaid();
+    const saleTotal = this.currentSaleTotal();
+    return Math.max(0, totalPaid - saleTotal);
+  });
 
   constructor(
     private productService: ProductService,
@@ -264,4 +278,9 @@ export class SalesComponent {
     this.paymentAmount = 0;
     this.selectedPaymentMethod = 'cash';
   }
-} 
+
+  // Método para formatar valores monetários
+  formatCurrency(value: number): string {
+    return this.currencyFormatter.format(value);
+  }
+}

@@ -38,7 +38,7 @@ export class DashboardComponent {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return this.stockService.getStockMovements().filter(movement => {
+    return this.stockService.getStockMovementsDb().filter(movement => {
       const movementDate = new Date(movement.date);
       movementDate.setHours(0, 0, 0, 0);
       return movementDate.getTime() === today.getTime();
