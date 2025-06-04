@@ -54,6 +54,38 @@ const mapMovementToDb = (apiMovement) => ({
   user_id: apiMovement.userId
 });
 
+// Funções auxiliares para mapear dados de vendas
+const mapSaleToApi = (dbSale) => ({
+  ...dbSale,
+  customerId: dbSale.customer_id,
+  createdBy: dbSale.created_by,
+  updatedBy: dbSale.updated_by,
+  createdAt: dbSale.created_at,
+  updatedAt: dbSale.updated_at
+});
+
+const mapSaleToDb = (apiSale) => ({
+  ...apiSale,
+  customer_id: apiSale.customerId,
+  created_by: apiSale.createdBy,
+  updated_by: apiSale.updatedBy
+});
+
+const mapSaleItemToApi = (dbItem) => ({
+  ...dbItem,
+  productId: dbItem.product_id,
+  variantId: dbItem.variant_id,
+  unitPrice: dbItem.unit_price,
+  createdAt: dbItem.created_at
+});
+
+const mapSaleItemToDb = (apiItem) => ({
+  ...apiItem,
+  product_id: apiItem.productId,
+  variant_id: apiItem.variantId,
+  unit_price: apiItem.unitPrice
+});
+
 // Rotas
 app.get('/api/products', (req, res) => {
   db.all('SELECT * FROM products', [], (err, rows) => {
@@ -246,6 +278,267 @@ app.post('/api/stock-movements', (req, res) => {
       res.status(201).json(apiMovement);
     }
   );
+});
+
+// Rotas de vendas
+app.get('/api/sales', (req, res) => {
+  const query = `
+    SELECT s.*,
+           GROUP_CONCAT(si.id) as item_ids,
+           GROUP_CONCAT(p.id) as payment_ids
+    FROM sales s
+    LEFT JOIN sale_items si ON s.id = si.sale_id
+    LEFT JOIN payments p ON s.id = p.sale_id
+    GROUP BY s.id
+    ORDER BY s.date DESC
+  `;
+
+  db.all(query, [], async (err, sales) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+
+    // Para cada venda, buscar seus itens e pagamentos
+    const salesWithDetails = await Promise.all(sales.map(async (sale) => {
+      const itemIds = sale.item_ids ? sale.item_ids.split(',') : [];
+      const paymentIds = sale.payment_ids ? sale.payment_ids.split(',') : [];
+
+      // Buscar itens
+      const items = await new Promise((resolve, reject) => {
+        if (!itemIds.length) resolve([]);
+        db.all('SELECT * FROM sale_items WHERE id IN (' + itemIds.join(',') + ')', [], (err, items) => {
+          if (err) reject(err);
+          resolve(items.map(mapSaleItemToApi));
+        });
+      });
+
+      // Buscar pagamentos
+      const payments = await new Promise((resolve, reject) => {
+        if (!paymentIds.length) resolve([]);
+        db.all('SELECT * FROM payments WHERE id IN (' + paymentIds.join(',') + ')', [], (err, payments) => {
+          if (err) reject(err);
+          resolve(payments);
+        });
+      });
+
+      // Remover campos auxiliares e adicionar itens e pagamentos
+      const { item_ids, payment_ids, ...saleData } = sale;
+      return {
+        ...mapSaleToApi(saleData),
+        items,
+        payments
+      };
+    }));
+
+    res.json(salesWithDetails);
+  });
+});
+
+app.get('/api/sales/:id', (req, res) => {
+  const query = `
+    SELECT s.*,
+           GROUP_CONCAT(si.id) as item_ids,
+           GROUP_CONCAT(p.id) as payment_ids
+    FROM sales s
+    LEFT JOIN sale_items si ON s.id = si.sale_id
+    LEFT JOIN payments p ON s.id = p.sale_id
+    WHERE s.id = ?
+    GROUP BY s.id
+  `;
+
+  db.get(query, [req.params.id], async (err, sale) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!sale) {
+      res.status(404).json({ error: 'Venda não encontrada' });
+      return;
+    }
+
+    const itemIds = sale.item_ids ? sale.item_ids.split(',') : [];
+    const paymentIds = sale.payment_ids ? sale.payment_ids.split(',') : [];
+
+    // Buscar itens
+    const items = await new Promise((resolve, reject) => {
+      if (!itemIds.length) resolve([]);
+      db.all('SELECT * FROM sale_items WHERE id IN (' + itemIds.join(',') + ')', [], (err, items) => {
+        if (err) reject(err);
+        resolve(items.map(mapSaleItemToApi));
+      });
+    });
+
+    // Buscar pagamentos
+    const payments = await new Promise((resolve, reject) => {
+      if (!paymentIds.length) resolve([]);
+      db.all('SELECT * FROM payments WHERE id IN (' + paymentIds.join(',') + ')', [], (err, payments) => {
+        if (err) reject(err);
+        resolve(payments);
+      });
+    });
+
+    // Remover campos auxiliares e adicionar itens e pagamentos
+    const { item_ids, payment_ids, ...saleData } = sale;
+    res.json({
+      ...mapSaleToApi(saleData),
+      items,
+      payments
+    });
+  });
+});
+
+app.post('/api/sales', (req, res) => {
+  const dbSale = mapSaleToDb(req.body);
+  const { items = [], payments = [] } = req.body;
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    try {
+      // Inserir a venda
+      db.run(
+        `INSERT INTO sales (
+          date, subtotal, total, status, customer_id,
+          notes, created_by, updated_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          dbSale.date || new Date().toISOString(),
+          dbSale.subtotal,
+          dbSale.total,
+          dbSale.status || 'pending',
+          dbSale.customer_id,
+          dbSale.notes,
+          dbSale.created_by,
+          dbSale.updated_by
+        ],
+        function(err) {
+          if (err) throw err;
+          const saleId = this.lastID;
+
+          // Inserir os itens
+          const itemsStmt = db.prepare(`
+            INSERT INTO sale_items (
+              sale_id, product_id, variant_id, name,
+              quantity, unit_price, price, subtotal
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          items.forEach(item => {
+            const dbItem = mapSaleItemToDb(item);
+            itemsStmt.run([
+              saleId,
+              dbItem.product_id,
+              dbItem.variant_id,
+              dbItem.name,
+              dbItem.quantity,
+              dbItem.unit_price,
+              dbItem.price,
+              dbItem.subtotal
+            ], err => { if (err) throw err; });
+          });
+          itemsStmt.finalize();
+
+          // Inserir os pagamentos
+          const paymentsStmt = db.prepare(`
+            INSERT INTO payments (
+              sale_id, method, amount, reference
+            ) VALUES (?, ?, ?, ?)
+          `);
+
+          payments.forEach(payment => {
+            paymentsStmt.run([
+              saleId,
+              payment.method,
+              payment.amount,
+              payment.reference
+            ], err => { if (err) throw err; });
+          });
+          paymentsStmt.finalize();
+
+          // Se a venda for completada, atualizar o estoque
+          if (dbSale.status === 'completed') {
+            items.forEach(item => {
+              db.run(
+                'UPDATE products SET stock = stock - ? WHERE id = ?',
+                [item.quantity, item.productId],
+                err => { if (err) throw err; }
+              );
+            });
+          }
+
+          db.run('COMMIT', err => {
+            if (err) throw err;
+            // Retornar a venda criada
+            res.json({
+              id: saleId,
+              ...req.body,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          });
+        }
+      );
+    } catch (err) {
+      db.run('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    }
+  });
+});
+
+app.put('/api/sales/:id', (req, res) => {
+  const dbSale = mapSaleToDb(req.body);
+  const { status } = dbSale;
+
+  // Se estiver apenas atualizando o status
+  if (Object.keys(dbSale).length === 1 && status) {
+    db.run(
+      'UPDATE sales SET status = ? WHERE id = ?',
+      [status, req.params.id],
+      (err) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+
+        // Se a venda for completada, atualizar o estoque
+        if (status === 'completed') {
+          db.all(
+            'SELECT * FROM sale_items WHERE sale_id = ?',
+            [req.params.id],
+            (err, items) => {
+              if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+              }
+
+              items.forEach(item => {
+                db.run(
+                  'UPDATE products SET stock = stock - ? WHERE id = ?',
+                  [item.quantity, item.product_id],
+                  err => {
+                    if (err) console.error('Erro ao atualizar estoque:', err);
+                  }
+                );
+              });
+            }
+          );
+        }
+
+        // Retorna a venda atualizada
+        db.get('SELECT * FROM sales WHERE id = ?', [req.params.id], (err, row) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          res.json(mapSaleToApi(row));
+        });
+      }
+    );
+    return;
+  }
+
+  res.status(400).json({ error: 'Apenas atualização de status é permitida' });
 });
 
 // Iniciar o servidor

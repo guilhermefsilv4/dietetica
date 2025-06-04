@@ -23,6 +23,10 @@ export interface Sale {
   total: number;
   status: 'pending' | 'completed' | 'cancelled';
   payments: Payment[];
-  customerName?: string;  // Nome do cliente (opcional)
-  notes?: string;        // Observações adicionais
-} 
+  customerId?: string;
+  notes?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

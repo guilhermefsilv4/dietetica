@@ -5,7 +5,7 @@ import { ProductVariant } from '@interfaces/product-variant.interface';
 import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductService } from './product.service';
 import { TicketService } from './ticket.service';
-import { MockDataService } from './mock-data.service';
+import { HttpService } from './http.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,10 +17,19 @@ export class SaleService {
   constructor(
     private productService: ProductService,
     private ticketService: TicketService,
-    private mockDataService: MockDataService
+    private http: HttpService
   ) {
-    // Inicializa com dados mockados
-    this.sales.set(this.mockDataService.getMockSales());
+    this.loadSales();
+  }
+
+  // Carregar vendas do backend
+  private async loadSales() {
+    try {
+      const sales = await this.http.get<Sale[]>('sales');
+      this.sales.set(sales);
+    } catch (error) {
+      console.error('Erro ao carregar vendas:', error);
+    }
   }
 
   // Getters
@@ -29,13 +38,13 @@ export class SaleService {
   }
 
   getSales() {
-    return this.sales;
+    return computed(() => this.sales());
   }
 
   // Iniciar nova venda
   startNewSale() {
     const newSale: Sale = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       date: new Date(),
       items: [],
       subtotal: 0,
@@ -53,7 +62,7 @@ export class SaleService {
     if (!currentSale) return null;
 
     const newItem: SaleItem = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       productId: product.id,
       variantId: variant?.id,
       name: variant?.name || product.name,
@@ -129,7 +138,7 @@ export class SaleService {
     if (!currentSale) return;
 
     const newPayment: Payment = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       method,
       amount,
       date: new Date(),
@@ -172,57 +181,54 @@ export class SaleService {
       throw new Error('Pagamento insuficiente');
     }
 
-    const completedSale: Sale = {
-      ...currentSale,
-      status: 'completed'
-    };
+    try {
+      // Enviar venda para o backend
+      const completedSale = await this.http.post<Sale>('sales', {
+        ...currentSale,
+        status: 'completed',
+        createdBy: 'system' // TODO: Implementar autenticação
+      });
 
-    // Atualiza o estado
-    this.sales.update(sales => [...sales, completedSale]);
-    this.currentSale.set(null);
+      // Atualizar estado local
+      this.sales.update(sales => [...sales, completedSale]);
+      this.currentSale.set(null);
 
-    // Atualiza o estoque (TODO: implementar)
-    this.updateStock(completedSale);
+      // Imprimir ticket
+      await this.ticketService.printTicket(completedSale);
 
-    // Imprime o ticket
-    await this.ticketService.printTicket(completedSale);
-    
-    return completedSale;
-  }
-
-  // Atualizar estoque após a venda
-  private updateStock(sale: Sale) {
-    // TODO: Implementar atualização do estoque
-    sale.items.forEach(item => {
-      if (item.variant) {
-        // Atualizar estoque da variante
-        console.log(`Atualizando estoque da variante ${item.variant.name} do produto ${item.product?.name}`);
-      } else if (item.product) {
-        // Atualizar estoque do produto
-        console.log(`Atualizando estoque do produto ${item.product.name}`);
-      }
-    });
+      return completedSale;
+    } catch (error) {
+      console.error('Erro ao completar venda:', error);
+      throw error;
+    }
   }
 
   // Cancelar venda
-  cancelSale() {
+  async cancelSale() {
     const currentSale = this.currentSale();
     if (!currentSale) return;
 
-    const cancelledSale: Sale = {
-      ...currentSale,
-      status: 'cancelled'
-    };
+    try {
+      // Se a venda já foi salva no backend e não está pendente
+      if (currentSale.id && currentSale.status !== 'pending') {
+        const cancelledSale = await this.http.put<Sale>(`sales/${currentSale.id}`, {
+          status: 'cancelled'
+        });
+        this.sales.update(sales => sales.map(s => s.id === cancelledSale.id ? cancelledSale : s));
+      }
 
-    this.sales.update(sales => [...sales, cancelledSale]);
-    this.currentSale.set(null);
-    return cancelledSale;
+      // Sempre limpa a venda atual
+      this.currentSale.set(null);
+    } catch (error) {
+      console.error('Erro ao cancelar venda:', error);
+      throw error;
+    }
   }
 
   // Buscar produto por código de barras
   findProductByBarcode(barcode: string): { product: Product, variant?: ProductVariant } | null {
     const products = this.productService.getProducts()();
-    
+
     // Primeiro procura nas variações
     for (const product of products) {
       if (product.variants) {
@@ -241,16 +247,4 @@ export class SaleService {
 
     return null;
   }
-
-  // Métodos
-  addSale(sale: Sale) {
-    this.sales.update(sales => [...sales, sale]);
-    // Em produção, aqui faria a chamada para a API
-  }
-
-  // Método para adicionar uma venda mockada (apenas para desenvolvimento)
-  addMockSale() {
-    const mockSale = this.mockDataService.generateMockSale();
-    this.addSale(mockSale);
-  }
-} 
+}

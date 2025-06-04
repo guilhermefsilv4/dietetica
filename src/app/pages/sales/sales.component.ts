@@ -173,10 +173,15 @@ export class SalesComponent {
     this.showCancelConfirmation.set(true);
   }
 
-  confirmCancelSale(): void {
-    this.saleService.cancelSale();
-    this.resetInputs();
-    this.showCancelConfirmation.set(false);
+  async confirmCancelSale(): Promise<void> {
+    try {
+      await this.saleService.cancelSale();
+      this.resetInputs();
+      this.showCancelConfirmation.set(false);
+    } catch (error) {
+      alert('Error al cancelar la venta: ' + (error as Error).message);
+      this.showCancelConfirmation.set(false);
+    }
   }
 
   cancelCancelSale(): void {
