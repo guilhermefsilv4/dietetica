@@ -227,32 +227,71 @@
     </div>
   } @else {
     <!-- Estado inicial - Sem venda ativa -->
-    <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-      <div class="mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Ventas Recientes</h2>
+
+        @if (recentSales().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (sale of recentSales(); track sale.id) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ sale.id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ sale.date | date:'short':'es-AR' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatCurrency(sale.total) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span [class]="getSaleStatusClass(sale.status)" [title]="getStatusTooltip(sale.status)">
+                        {{ sale.status === 'completed' ? 'Completada' : 'Cancelada' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="text-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">No hay venta activa</h2>
+            <p class="text-gray-600 mb-6">
+              Haga clic en "Nueva Venta" para comenzar una nueva transacción
+            </p>
+          </div>
+        }
       </div>
-      <h2 class="text-xl font-semibold text-gray-800 mb-2">No hay venta activa</h2>
-      <p class="text-gray-600 mb-6">
-        Haga clic en "Nueva Venta" para comenzar una nueva transacción
-      </p>
 
       <!-- Estatísticas rápidas -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <div class="bg-gray-50 rounded-lg p-4">
           <div class="text-sm text-gray-500">Ventas de Hoy</div>
           <div class="text-2xl font-bold text-gray-800">{{ todaySalesCount() }}</div>
-          <div class="text-sm text-gray-600">${{ todaySalesTotal().toFixed(2) }}</div>
+          <div class="text-sm text-gray-600">{{ formatCurrency(todaySalesTotal()) }}</div>
         </div>
         <div class="bg-gray-50 rounded-lg p-4">
           <div class="text-sm text-gray-500">Ventas del Mes</div>
           <div class="text-2xl font-bold text-gray-800">{{ monthSalesCount() }}</div>
-          <div class="text-sm text-gray-600">${{ monthSalesTotal().toFixed(2) }}</div>
+          <div class="text-sm text-gray-600">{{ formatCurrency(monthSalesTotal()) }}</div>
         </div>
         <div class="bg-gray-50 rounded-lg p-4">
           <div class="text-sm text-gray-500">Ticket Promedio</div>
-          <div class="text-2xl font-bold text-gray-800">${{ averageTicket().toFixed(2) }}</div>
+          <div class="text-2xl font-bold text-gray-800">{{ formatCurrency(averageTicket()) }}</div>
         </div>
       </div>
     </div>

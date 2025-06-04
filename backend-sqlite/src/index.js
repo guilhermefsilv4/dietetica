@@ -2,6 +2,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const { initializeDatabase } = require('./database/init');
 
 const app = express();
 const port = 3000;
@@ -11,11 +12,17 @@ app.use(cors());
 app.use(express.json());
 
 // Conexão com o banco
-const db = new sqlite3.Database(path.join(__dirname, 'database/dietetica.db'), (err) => {
+const db = new sqlite3.Database(path.join(__dirname, 'database/dietetica.db'), async (err) => {
   if (err) {
     console.error('Erro ao conectar ao banco:', err);
   } else {
     console.log('Conectado ao banco SQLite');
+    try {
+      await initializeDatabase(db);
+      console.log('Banco de dados inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar banco:', error);
+    }
   }
 });
 
