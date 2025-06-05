@@ -7,12 +7,18 @@ const { initializeDatabase } = require('./database/init');
 const app = express();
 const port = 3000;
 
+// Determina o ambiente (dev ou prod)
+const isDev = process.env.NODE_ENV === 'development';
+const dbName = isDev ? 'dietetica_dev.db' : 'dietetica_prod.db';
+console.log(`Ambiente: ${isDev ? 'Desenvolvimento' : 'Produção'}`);
+console.log(`Usando banco: ${dbName}`);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Conexão com o banco
-const db = new sqlite3.Database(path.join(__dirname, 'database/dietetica.db'), async (err) => {
+const db = new sqlite3.Database(path.join(__dirname, 'database', dbName), async (err) => {
   if (err) {
     console.error('Erro ao conectar ao banco:', err);
   } else {
