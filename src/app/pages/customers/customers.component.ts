@@ -6,11 +6,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, DatePipe],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, PaginationComponent, DatePipe],
   templateUrl: './customers.component.html',
   styles: ``
 })
@@ -24,6 +25,10 @@ export class CustomersComponent {
   searchTerm = signal('');
   showModal = signal(false);
   editingCustomer: Customer | null = null;
+
+  // Estado da paginação
+  currentPage = signal(1);
+  pageSize = signal(10);
 
   // Estado do modal de confirmação
   showDeleteConfirmation = signal(false);
@@ -67,6 +72,34 @@ export class CustomersComponent {
 
     return customers;
   });
+
+  // Computed properties para paginação
+  paginatedCustomers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredCustomers().slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredCustomers().length / this.pageSize());
+  });
+
+  totalItems = computed(() => {
+    return this.filteredCustomers().length;
+  });
+
+  // Métodos de paginação
+  onPreviousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(page => page - 1);
+    }
+  }
+
+  onNextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(page => page + 1);
+    }
+  }
 
   // Computed para mensagem de confirmação
   deleteConfirmationMessage = computed(() => {

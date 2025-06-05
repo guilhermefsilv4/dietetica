@@ -5,6 +5,7 @@ import { StockService } from '@services/stock.service';
 import { ProductCardComponent } from '@components/product-card/product-card.component';
 import { StockChartsComponent } from '@components/stock-charts/stock-charts.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 import {
   faBoxesStacked,
   faChevronLeft,
@@ -16,11 +17,19 @@ import {
   faSync
 } from '@fortawesome/free-solid-svg-icons';
 import { StockMovement } from '@interfaces/stock-movement.interface';
+import { TooltipComponent } from '@components/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent, StockChartsComponent, FontAwesomeModule],
+  imports: [
+    CommonModule,
+    ProductCardComponent,
+    StockChartsComponent,
+    FontAwesomeModule,
+    PaginationComponent,
+    TooltipComponent
+  ],
   templateUrl: './dashboard.component.html',
   styles: [`
     .skeleton {
@@ -64,15 +73,15 @@ export class DashboardComponent {
   private errorMessage = signal('');
 
   // Paginação
-  private currentPage = signal(1);
-  private pageSize = 10;
+  currentPage = signal(1);
+  pageSize = signal(10);
   private movementsData = computed(() =>
-    this.stockService.getRecentMovementsDb(this.currentPage(), this.pageSize)
+    this.stockService.getRecentMovementsDb(this.currentPage(), this.pageSize())
   );
 
   recentMovements = computed(() => this.movementsData().movements);
   totalPages = computed(() => this.movementsData().totalPages);
-  currentPageNumber = computed(() => this.movementsData().currentPage);
+  totalItems = computed(() => this.movementsData().total || 0);
 
   constructor(
     private productService: ProductService,
@@ -123,13 +132,13 @@ export class DashboardComponent {
   });
 
   // Paginação
-  nextPage() {
+  onNextPage() {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update(page => page + 1);
     }
   }
 
-  previousPage() {
+  onPreviousPage() {
     if (this.currentPage() > 1) {
       this.currentPage.update(page => page - 1);
     }
