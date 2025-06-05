@@ -6,7 +6,13 @@ import { StockService } from '@services/stock.service';
 import { Product } from '@interfaces/product.interface';
 import { StockMovementType } from '@interfaces/stock-movement.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faArrowUp, faArrowDown, faSliders, faBoxesStacked } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowUp,
+  faArrowDown,
+  faSliders,
+  faBoxesStacked,
+  faSearch
+} from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 
@@ -25,10 +31,11 @@ import { PaginationComponent } from '@components/shared/pagination/pagination.co
 })
 export class StockComponent {
   // Ícones
-  faArrowUp = faArrowUp;
-  faArrowDown = faArrowDown;
-  faSliders = faSliders;
-  faBoxesStacked = faBoxesStacked;
+  protected faArrowUp = faArrowUp;
+  protected faArrowDown = faArrowDown;
+  protected faSliders = faSliders;
+  protected faBoxesStacked = faBoxesStacked;
+  protected faSearch = faSearch;
 
   // Estado do componente
   searchTerm = signal('');
@@ -63,7 +70,8 @@ export class StockComponent {
       products = products.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
-        p.brand.toLowerCase().includes(term)
+        p.brand.toLowerCase().includes(term) ||
+        p.barcode?.toLowerCase() === term // Busca exata por código de barras
       );
     }
 

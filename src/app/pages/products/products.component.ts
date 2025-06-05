@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
@@ -17,8 +17,9 @@ import { PaginationComponent } from '@components/shared/pagination/pagination.co
 })
 export class ProductsComponent {
   // Ícones
-  faEdit = faEdit;
-  faTrash = faTrash;
+  protected faEdit = faEdit;
+  protected faTrash = faTrash;
+  protected faSearch = faSearch;
 
   // Estado do componente
   searchTerm = signal('');
@@ -64,7 +65,8 @@ export class ProductsComponent {
       products = products.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
-        p.brand.toLowerCase().includes(term)
+        p.brand.toLowerCase().includes(term) ||
+        p.barcode?.toLowerCase() === term // Busca exata por código de barras
       );
     }
 

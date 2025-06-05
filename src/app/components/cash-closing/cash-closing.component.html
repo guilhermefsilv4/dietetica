@@ -142,7 +142,7 @@
 
     @if (closingHistory().length > 0) {
       <div class="space-y-4">
-        @for (closing of closingHistory(); track closing.id) {
+        @for (closing of paginatedClosings(); track closing.id) {
           <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
             <div class="flex justify-between items-start mb-4">
               <div>
@@ -179,6 +179,17 @@
             }
           </div>
         }
+
+        <!-- Paginação -->
+        <app-pagination
+          class="m-4"
+          [currentPage]="currentPage()"
+          [totalPages]="totalPages()"
+          [pageSize]="pageSize()"
+          [totalItems]="totalItems()"
+          (previousPage)="onPreviousPage()"
+          (nextPage)="onNextPage()"
+        ></app-pagination>
       </div>
     } @else {
       <div class="text-center py-12 bg-white rounded-lg shadow-lg">
