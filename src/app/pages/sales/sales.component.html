@@ -231,25 +231,69 @@
       <div class="mb-8">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Ventas Recientes</h2>
 
-        @if (recentSales().length > 0) {
+        <!-- Filtros -->
+        <div class="flex gap-4 mb-6">
+          <div class="flex-1">
+            <div class="relative">
+              <input
+                type="text"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="onSearchChange($event)"
+                class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Buscar por producto o código de barras..."
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-2.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">Período:</label>
+            <select
+              [ngModel]="dateFilter()"
+              (ngModelChange)="onDateFilterChange($event)"
+              class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos</option>
+              <option value="today">Hoy</option>
+              <option value="week">Última semana</option>
+              <option value="month">Último mes</option>
+            </select>
+          </div>
+        </div>
+
+        @if (paginatedSales().items.length > 0) {
           <div class="overflow-x-auto">
+            <!-- Resumo -->
+            <div class="text-sm text-gray-600 mb-4">
+              Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} a
+              {{ Math.min(currentPage() * itemsPerPage(), paginatedSales().total) }}
+              de {{ paginatedSales().total }} ventas
+            </div>
+
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                @for (sale of recentSales(); track sale.id) {
-                  <tr>
+                @for (sale of paginatedSales().items; track sale.id) {
+                  <tr class="hover:bg-gray-50 transition-colors duration-200">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {{ sale.id }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ sale.date | date:'short':'es-AR' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <div class="max-w-md truncate">
+                        {{ getItemsText(sale) }}
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {{ formatCurrency(sale.total) }}
@@ -264,14 +308,26 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Componente de Paginação -->
+          <div class="mt-6 flex justify-center">
+            <app-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages()"
+              [pageSize]="itemsPerPage()"
+              [totalItems]="paginatedSales().total"
+              (previousPage)="onPreviousPage()"
+              (nextPage)="onNextPage()"
+            />
+          </div>
         } @else {
           <div class="text-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h2 class="text-xl font-semibold text-gray-800 mb-2">No hay venta activa</h2>
-            <p class="text-gray-600 mb-6">
-              Haga clic en "Nueva Venta" para comenzar una nueva transacción
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">No hay ventas recientes</h2>
+            <p class="text-gray-600">
+              Las ventas realizadas aparecerán aquí
             </p>
           </div>
         }

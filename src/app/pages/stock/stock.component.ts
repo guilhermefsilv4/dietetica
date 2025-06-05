@@ -6,21 +6,36 @@ import { StockService } from '@services/stock.service';
 import { Product } from '@interfaces/product.interface';
 import { StockMovementType } from '@interfaces/stock-movement.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faArrowUp, faArrowDown, faSliders } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowUp,
+  faArrowDown,
+  faSliders,
+  faBoxesStacked,
+  faSearch
+} from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    TooltipComponent,
+    PaginationComponent
+  ],
   templateUrl: './stock.component.html',
   styles: ``
 })
 export class StockComponent {
   // Ícones
-  faArrowUp = faArrowUp;
-  faArrowDown = faArrowDown;
-  faSliders = faSliders;
+  protected faArrowUp = faArrowUp;
+  protected faArrowDown = faArrowDown;
+  protected faSliders = faSliders;
+  protected faBoxesStacked = faBoxesStacked;
+  protected faSearch = faSearch;
 
   // Estado do componente
   searchTerm = signal('');
@@ -30,6 +45,10 @@ export class StockComponent {
   selectedMovementType: StockMovementType | null = null;
   movementQuantity = 0;
   movementDescription = '';
+
+  // Estado da paginação
+  currentPage = signal(1);
+  pageSize = signal(10);
 
   constructor(
     private productService: ProductService,
@@ -51,7 +70,8 @@ export class StockComponent {
       products = products.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
-        p.brand.toLowerCase().includes(term)
+        p.brand.toLowerCase().includes(term) ||
+        p.barcode?.toLowerCase() === term // Busca exata por código de barras
       );
     }
 
@@ -62,6 +82,34 @@ export class StockComponent {
 
     return products;
   });
+
+  // Computed properties para paginação
+  paginatedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredProducts().slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredProducts().length / this.pageSize());
+  });
+
+  totalItems = computed(() => {
+    return this.filteredProducts().length;
+  });
+
+  // Métodos de paginação
+  onPreviousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(page => page - 1);
+    }
+  }
+
+  onNextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(page => page + 1);
+    }
+  }
 
   // Métodos auxiliares
   getStockClass(stock: number): string {

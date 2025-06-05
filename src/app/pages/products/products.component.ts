@@ -4,26 +4,32 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, PaginationComponent],
   templateUrl: './products.component.html'
 })
 export class ProductsComponent {
   // Ícones
-  faEdit = faEdit;
-  faTrash = faTrash;
+  protected faEdit = faEdit;
+  protected faTrash = faTrash;
+  protected faSearch = faSearch;
 
   // Estado do componente
   searchTerm = signal('');
   selectedCategory = signal('');
   showModal = signal(false);
   editingProduct: Product | null = null;
+
+  // Estado da paginação
+  currentPage = signal(1);
+  pageSize = signal(10);
 
   // Estado do modal de confirmação
   showDeleteConfirmation = signal(false);
@@ -52,14 +58,15 @@ export class ProductsComponent {
 
   filteredProducts = computed(() => {
     let products = this.productService.getProductsDb()();
-    
+
     // Filtrar por termo de busca
     if (this.searchTerm()) {
       const term = this.searchTerm().toLowerCase();
-      products = products.filter(p => 
+      products = products.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
-        p.brand.toLowerCase().includes(term)
+        p.brand.toLowerCase().includes(term) ||
+        p.barcode?.toLowerCase() === term // Busca exata por código de barras
       );
     }
 
@@ -69,6 +76,21 @@ export class ProductsComponent {
     }
 
     return products;
+  });
+
+  // Computed properties para paginação
+  paginatedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredProducts().slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredProducts().length / this.pageSize());
+  });
+
+  totalItems = computed(() => {
+    return this.filteredProducts().length;
   });
 
   // Computed para mensagem de confirmação
@@ -193,4 +215,17 @@ export class ProductsComponent {
     this.showDeleteConfirmation.set(false);
     this.productToDelete.set(null);
   }
-} 
+
+  // Métodos de paginação
+  onPreviousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.set(this.currentPage() - 1);
+    }
+  }
+
+  onNextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.set(this.currentPage() + 1);
+    }
+  }
+}

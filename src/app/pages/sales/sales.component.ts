@@ -11,11 +11,18 @@ import { Sale, SaleItem } from '@interfaces/sale.interface';
 import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductVariant } from '@interfaces/product-variant.interface';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, ConfirmationModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    ConfirmationModalComponent,
+    PaginationComponent
+  ],
   templateUrl: './sales.component.html',
   styles: []
 })
@@ -23,12 +30,76 @@ export class SalesComponent {
   // Ícones
   faTrash = faTrash;
 
+  // Referência ao Math para usar no template
+  protected Math = Math;
+
   // Estado do componente
   currentSale = computed(() => this.saleService.getCurrentSale()());
   barcodeInput = '';
   quantityInput = 1;
   selectedPaymentMethod: PaymentMethod = 'cash';
   paymentAmount = 0;
+
+  // Estado da busca
+  searchTerm = signal('');
+  dateFilter = signal<'today' | 'week' | 'month' | 'all'>('all');
+
+  // Estado da paginação
+  currentPage = signal(1);
+  itemsPerPage = signal(10);
+  filteredSales = computed(() => {
+    let sales = this.saleService.getSales()();
+
+    // Filtrar por termo de busca
+    if (this.searchTerm()) {
+      const term = this.searchTerm().toLowerCase();
+      sales = sales.filter(sale =>
+        sale.items.some(item =>
+          item.name.toLowerCase().includes(term) ||
+          item.product?.name.toLowerCase().includes(term) ||
+          item.product?.barcode?.toLowerCase() === term // Busca exata por código de barras
+        )
+      );
+    }
+
+    // Filtrar por data
+    if (this.dateFilter() !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      switch (this.dateFilter()) {
+        case 'today':
+          sales = sales.filter(sale => {
+            const saleDate = new Date(sale.date);
+            return saleDate >= today;
+          });
+          break;
+        case 'week':
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          sales = sales.filter(sale => new Date(sale.date) >= weekAgo);
+          break;
+        case 'month':
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          sales = sales.filter(sale => new Date(sale.date) >= monthAgo);
+          break;
+      }
+    }
+
+    return sales;
+  });
+
+  paginatedSales = computed(() => {
+    const start = (this.currentPage() - 1) * this.itemsPerPage();
+    const end = start + this.itemsPerPage();
+    return {
+      items: this.filteredSales().slice(start, end),
+      total: this.filteredSales().length
+    };
+  });
+
+  totalPages = computed(() => Math.ceil(this.filteredSales().length / this.itemsPerPage()));
 
   // Estado do modal de confirmação
   showCancelConfirmation = signal(false);
@@ -117,6 +188,10 @@ export class SalesComponent {
       default:
         return 'Estado desconocido';
     }
+  }
+
+  getItemsText(sale: Sale): string {
+    return sale.items.map(item => item.name).join(', ');
   }
 
   // Métodos de manipulação da venda
@@ -243,5 +318,29 @@ export class SalesComponent {
   // Método para formatar valores monetários
   formatCurrency(value: number): string {
     return this.currencyFormatter.format(value);
+  }
+
+  // Métodos de paginação
+  onPreviousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(page => page - 1);
+    }
+  }
+
+  onNextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(page => page + 1);
+    }
+  }
+
+  // Métodos de filtro
+  onSearchChange(term: string) {
+    this.searchTerm.set(term);
+    this.currentPage.set(1); // Resetar para primeira página ao buscar
+  }
+
+  onDateFilterChange(filter: 'today' | 'week' | 'month' | 'all') {
+    this.dateFilter.set(filter);
+    this.currentPage.set(1); // Resetar para primeira página ao filtrar
   }
 }

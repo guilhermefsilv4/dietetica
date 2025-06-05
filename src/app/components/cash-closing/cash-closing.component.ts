@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CashClosingService } from '@services/cash-closing.service';
@@ -6,6 +6,7 @@ import { PaymentMethod } from '@interfaces/payment.interface';
 import { CashClosing } from '@interfaces/cash-closing.interface';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { PaginationComponent } from '@components/shared/pagination/pagination.component';
 import {
   faCashRegister,
   faMoneyBill,
@@ -21,7 +22,13 @@ import {
 @Component({
   selector: 'app-cash-closing',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmationModalComponent, FontAwesomeModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ConfirmationModalComponent,
+    FontAwesomeModule,
+    PaginationComponent
+  ],
   templateUrl: './cash-closing.component.html'
 })
 export class CashClosingComponent {
@@ -41,8 +48,27 @@ export class CashClosingComponent {
   // Estado do modal de confirmação
   showCloseConfirmation = signal(false);
 
+  // Estado da paginação
+  currentPage = signal(1);
+  pageSize = signal(2); // Mostrando menos itens por página já que os cards são maiores
+
   currentClosing = this.cashClosingService.getCurrentClosing;
   closingHistory = this.cashClosingService.getClosingHistory;
+
+  // Computed properties para paginação
+  paginatedClosings = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.closingHistory().slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.closingHistory().length / this.pageSize());
+  });
+
+  totalItems = computed(() => {
+    return this.closingHistory().length;
+  });
 
   actualAmounts: Record<PaymentMethod, number> = {
     cash: 0,
@@ -53,6 +79,19 @@ export class CashClosingComponent {
   };
 
   notes: string = '';
+
+  // Métodos de paginação
+  onPreviousPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(page => page - 1);
+    }
+  }
+
+  onNextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(page => page + 1);
+    }
+  }
 
   getPaymentIcon(method: PaymentMethod) {
     switch (method) {

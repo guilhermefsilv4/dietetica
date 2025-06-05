@@ -14,14 +14,25 @@
   <div class="bg-white rounded-lg shadow p-6 mb-8">
     <div class="flex flex-wrap gap-4">
       <div class="flex-1">
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Buscar productos..."
-          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Buscar por nombre o código de barras
+        </label>
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Nombre del producto o código de barras..."
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <fa-icon [icon]="faSearch" class="text-gray-400"></fa-icon>
+          </div>
+        </div>
       </div>
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Categoría
+        </label>
         <select
           [(ngModel)]="selectedCategory"
           class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -35,68 +46,82 @@
     </div>
   </div>
 
-  <!-- Lista de Produtos -->
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        @for (product of filteredProducts(); track product.id) {
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="h-10 w-10 flex-shrink-0">
-                  <img [src]="product.imageUrl" class="h-10 w-10 rounded-full object-cover" />
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
-                  <div class="text-sm text-gray-500">{{ product.brand }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ product.category }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ product.price.toFixed(2) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <app-tooltip [text]="getStockTooltip(product.stock)">
-                <span [class]="getStockClass(product.stock)">
-                  {{ product.stock }}
-                </span>
-              </app-tooltip>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <app-tooltip text="Editar producto">
-                <button
-                  (click)="openProductModal(product)"
-                  class="text-blue-600 hover:text-blue-900 mr-4"
-                >
-                  <fa-icon [icon]="faEdit"></fa-icon>
-                </button>
-              </app-tooltip>
-              <app-tooltip text="Eliminar producto">
-                <button
-                  (click)="deleteProduct(product)"
-                  class="text-red-600 hover:text-red-900"
-                >
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </app-tooltip>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <!-- Tabela de produtos -->
+  <div class="mt-8 flex flex-col">
+    <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr *ngFor="let product of paginatedProducts()" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="h-10 w-10 flex-shrink-0">
+                      <img [src]="product.imageUrl" class="h-10 w-10 rounded-full object-cover" />
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
+                      <div class="text-sm text-gray-500">{{ product.brand }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ product.category }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ product.price.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <app-tooltip [text]="getStockTooltip(product.stock)">
+                    <span [class]="getStockClass(product.stock)">
+                      {{ product.stock }}
+                    </span>
+                  </app-tooltip>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <app-tooltip text="Editar producto">
+                    <button
+                      (click)="openProductModal(product)"
+                      class="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <fa-icon [icon]="faEdit"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                  <app-tooltip text="Eliminar producto">
+                    <button
+                      (click)="deleteProduct(product)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </app-tooltip>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Paginação -->
+  <app-pagination
+    [currentPage]="currentPage()"
+    [totalPages]="totalPages()"
+    [pageSize]="pageSize()"
+    [totalItems]="totalItems()"
+    (previousPage)="onPreviousPage()"
+    (nextPage)="onNextPage()"
+  ></app-pagination>
 
   <!-- Modal de Produto -->
   @if (showModal()) {
@@ -107,7 +132,7 @@
             {{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}
           </h2>
         </div>
-        
+
         <div class="p-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Coluna 1 -->
@@ -273,4 +298,4 @@
     (confirm)="confirmDelete()"
     (cancel)="cancelDelete()"
   />
-</div> 
+</div>

@@ -12,7 +12,9 @@
       [disabled]="isLoadingState()"
       aria-label="Actualizar datos"
     >
-      <fa-icon [icon]="faSpinner" class="mr-2" *ngIf="isLoadingState()"></fa-icon>
+      @if (isLoadingState()) {
+        <fa-icon [icon]="faSpinner" class="mr-2"/>
+      }
       <span>Actualizar</span>
     </button>
   </div>
@@ -81,11 +83,6 @@
   <div class="bg-white rounded-lg shadow p-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold text-gray-800">Movimientos Recientes</h2>
-      <div class="text-sm text-gray-500">
-        @if (!isLoadingState() && recentMovements().length > 0) {
-          Mostrando {{ (currentPageNumber() - 1) * 10 + 1 }} - {{ Math.min(currentPageNumber() * 10, recentMovements().length) }} de {{ recentMovements().length }} movimientos
-        }
-      </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -127,79 +124,47 @@
             @for (movement of recentMovements(); track movement.id) {
               <tr class="movement-row">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
+                  <app-tooltip text="Fecha y hora del movimiento">
+                    {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ getProductName(movement.productId) }}
+                  <app-tooltip [text]="'ID: ' + movement.productId">
+                    {{ getProductName(movement.productId) }}
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <span [class]="getMovementTypeClass(movement.type)">
-                    <fa-icon [icon]="getMovementTypeIcon(movement.type)" class="text-xs"></fa-icon>
-                    {{ movement.type }}
-                  </span>
+                  <app-tooltip [text]="'Tipo de movimiento: ' + movement.type">
+                    <span [class]="getMovementTypeClass(movement.type)">
+                      <fa-icon [icon]="getMovementTypeIcon(movement.type)" class="text-xs"></fa-icon>
+                      {{ movement.type }}
+                    </span>
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ movement.quantity }}
+                  <app-tooltip text="Cantidad movida">
+                    {{ movement.quantity }}
+                  </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ movement.currentStock }}
+                  <app-tooltip text="Stock después del movimiento">
+                    {{ movement.currentStock }}
+                  </app-tooltip>
                 </td>
               </tr>
             }
           </tbody>
         </table>
 
-        <!-- Controles de Paginação -->
-        <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
-          <div class="flex justify-between flex-1 sm:hidden">
-            <button
-              (click)="previousPage()"
-              [disabled]="currentPageNumber() === 1"
-              class="pagination-button"
-              aria-label="Página anterior"
-            >
-              Anterior
-            </button>
-            <button
-              (click)="nextPage()"
-              [disabled]="currentPageNumber() === totalPages()"
-              class="pagination-button ml-3"
-              aria-label="Página siguiente"
-            >
-              Siguiente
-            </button>
-          </div>
-          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700">
-                Página <span class="font-medium">{{ currentPageNumber() }}</span> de
-                <span class="font-medium">{{ totalPages() }}</span>
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  (click)="previousPage()"
-                  [disabled]="currentPageNumber() === 1"
-                  class="pagination-button rounded-l-md"
-                  aria-label="Página anterior"
-                >
-                  <span class="sr-only">Anterior</span>
-                  <fa-icon [icon]="faChevronLeft" class="h-5 w-5"></fa-icon>
-                </button>
-                <button
-                  (click)="nextPage()"
-                  [disabled]="currentPageNumber() === totalPages()"
-                  class="pagination-button rounded-r-md"
-                  aria-label="Página siguiente"
-                >
-                  <span class="sr-only">Siguiente</span>
-                  <fa-icon [icon]="faChevronRight" class="h-5 w-5"></fa-icon>
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+        <!-- Paginação -->
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalPages]="totalPages()"
+          [pageSize]="pageSize()"
+          [totalItems]="totalItems()"
+          (previousPage)="onPreviousPage()"
+          (nextPage)="onNextPage()"
+        ></app-pagination>
       } @else {
         <div class="text-center py-12">
           <fa-icon [icon]="faBoxesStacked" class="text-gray-400 text-5xl mb-4"></fa-icon>
