@@ -6,6 +6,10 @@ import { ProductCardComponent } from '@components/product-card/product-card.comp
 import { StockChartsComponent } from '@components/stock-charts/stock-charts.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
+import { Product } from '@interfaces/product.interface';
+import { FormsModule } from '@angular/forms';
+import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
+import { StockMovementType } from '@interfaces/stock-movement.interface';
 import {
   faBoxesStacked,
   faChevronLeft,
@@ -26,11 +30,13 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ProductCardComponent,
     StockChartsComponent,
     FontAwesomeModule,
     PaginationComponent,
-    TooltipComponent
+    TooltipComponent,
+    ConfirmationModalComponent
   ],
   templateUrl: './dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,6 +90,17 @@ export class DashboardComponent {
   private isLoading = signal(true);
   private hasError = signal(false);
   private errorMessage = signal('');
+
+  // Estado do modal
+  showModal = signal(false);
+  showDeleteConfirmation = signal(false);
+  productToDelete = signal<Product | null>(null);
+
+  // Estado do modal de movimentação
+  selectedProduct: Product | null = null;
+  selectedMovementType: StockMovementType | null = null;
+  movementQuantity = 0;
+  movementDescription = '';
 
   // Paginação
   currentPage = signal(1);
@@ -223,15 +240,15 @@ export class DashboardComponent {
   hasErrorState = computed(() => this.hasError());
   errorMessageState = computed(() => this.errorMessage());
 
+  // Métodos de cópia de código de barras
   async copyBarcode(productId: string, event: Event) {
-    event.stopPropagation(); // Previne a propagação do evento
+    event.stopPropagation();
     const barcode = this.getProductBarcode(productId);
 
     try {
       await navigator.clipboard.writeText(barcode);
       this.copiedProductId.set(productId);
 
-      // Reset do estado após 2 segundos
       setTimeout(() => {
         this.copiedProductId.set(null);
       }, 2000);
@@ -243,4 +260,102 @@ export class DashboardComponent {
   isCopied(productId: string): boolean {
     return this.copiedProductId() === productId;
   }
+
+  // Métodos de manipulação do modal de movimentação
+  openMovementModal(product: Product, type: StockMovementType) {
+    this.selectedProduct = product;
+    this.selectedMovementType = type;
+    this.movementQuantity = 0;
+    this.movementDescription = '';
+    this.showModal.set(true);
+  }
+
+  closeModal() {
+    this.showModal.set(false);
+    this.selectedProduct = null;
+    this.selectedMovementType = null;
+    this.movementQuantity = 0;
+    this.movementDescription = '';
+  }
+
+  isValidMovement(): boolean {
+    return !!(
+      this.selectedProduct &&
+      this.selectedMovementType &&
+      this.movementQuantity > 0 &&
+      this.movementDescription.trim()
+    );
+  }
+
+  async saveMovement() {
+    if (!this.selectedProduct || !this.selectedMovementType || !this.isValidMovement()) {
+      return;
+    }
+
+    try {
+      await this.stockService.addStockMovementDb(
+        this.selectedProduct.id,
+        this.selectedMovementType,
+        this.movementQuantity,
+        this.movementDescription
+      );
+
+      // Atualiza a lista de movimentações
+      await this.stockService.loadStockMovementsDb();
+
+      this.closeModal();
+      // TODO: Adicionar um componente de toast/notificação para feedback
+      console.log('Movimentação registrada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao registrar movimentação:', error);
+      // TODO: Adicionar um componente de toast/notificação para erros
+      alert('Erro ao registrar movimentação. Por favor, tente novamente.');
+    }
+  }
+
+  getMovementTitle(type: StockMovementType | null): string {
+    switch (type) {
+      case 'entrada':
+        return 'Registrar Entrada';
+      case 'salida':
+        return 'Registrar Salida';
+      case 'ajuste':
+        return 'Ajustar Stock';
+      default:
+        return 'Movimiento de Stock';
+    }
+  }
+
+  // Métodos de exclusão
+  async deleteProduct(productId: string) {
+    const product = this.productService.getProductsDb()().find(p => p.id === productId);
+    if (product) {
+      this.productToDelete.set(product);
+      this.showDeleteConfirmation.set(true);
+    }
+  }
+
+  async confirmDelete() {
+    try {
+      if (this.productToDelete()) {
+        await this.productService.deleteProductDb(this.productToDelete()!.id);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir produto:', error);
+    } finally {
+      this.showDeleteConfirmation.set(false);
+      this.productToDelete.set(null);
+    }
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirmation.set(false);
+    this.productToDelete.set(null);
+  }
+
+  // Computed para mensagem de confirmação
+  deleteConfirmationMessage = computed(() => {
+    const productName = this.productToDelete()?.name || '';
+    return `Tem certeza que deseja excluir o produto "${productName}"?`;
+  });
 }
