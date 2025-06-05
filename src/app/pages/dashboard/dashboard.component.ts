@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
@@ -14,7 +14,9 @@ import {
   faExclamationTriangle,
   faArrowUp,
   faArrowDown,
-  faSync
+  faSync,
+  faClipboard,
+  faClipboardCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { StockMovement } from '@interfaces/stock-movement.interface';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
@@ -31,6 +33,7 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
     TooltipComponent
   ],
   templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     .skeleton {
       @apply animate-pulse bg-gray-200 rounded;
@@ -51,6 +54,14 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
     .pagination-button:disabled {
       @apply text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed;
     }
+
+    .copy-button {
+      @apply opacity-0 text-gray-400 hover:text-blue-600 transition-all duration-200 p-1 rounded-full hover:bg-blue-50;
+    }
+
+    .copied {
+      @apply text-green-500 bg-green-50;
+    }
   `]
 })
 export class DashboardComponent {
@@ -66,6 +77,8 @@ export class DashboardComponent {
   protected faArrowUp = faArrowUp;
   protected faArrowDown = faArrowDown;
   protected faSync = faSync;
+  protected faClipboard = faClipboard;
+  protected faClipboardCheck = faClipboardCheck;
 
   // Estados
   private isLoading = signal(true);
@@ -83,11 +96,36 @@ export class DashboardComponent {
   totalPages = computed(() => this.movementsData().totalPages);
   totalItems = computed(() => this.movementsData().total || 0);
 
+  // Cache de produtos
+  private productsMap = computed(() => {
+    const products = this.productService.getProductsDb()();
+    const map = new Map();
+    products.forEach(product => {
+      map.set(product.id, {
+        name: product.name,
+        barcode: product.barcode
+      });
+    });
+    return map;
+  });
+
+  // Estado de feedback da cópia
+  private copiedProductId = signal<string | null>(null);
+
   constructor(
     private productService: ProductService,
     private stockService: StockService
   ) {
     this.loadData();
+  }
+
+  // Track by functions
+  protected trackById(index: number, item: any): string {
+    return item.id;
+  }
+
+  protected trackByIndex(index: number): number {
+    return index;
   }
 
   private async loadData() {
@@ -146,8 +184,11 @@ export class DashboardComponent {
 
   // Helpers
   getProductName(productId: string): string {
-    const product = this.productService.getProductByIdDb(productId);
-    return product?.name || 'Producto no encontrado';
+    return this.productsMap()?.get(productId)?.name || 'Producto no encontrado';
+  }
+
+  getProductBarcode(productId: string): string {
+    return this.productsMap()?.get(productId)?.barcode || '';
   }
 
   getMovementTypeClass(type: string): string {
@@ -181,4 +222,25 @@ export class DashboardComponent {
   isLoadingState = computed(() => this.isLoading());
   hasErrorState = computed(() => this.hasError());
   errorMessageState = computed(() => this.errorMessage());
+
+  async copyBarcode(productId: string, event: Event) {
+    event.stopPropagation(); // Previne a propagação do evento
+    const barcode = this.getProductBarcode(productId);
+
+    try {
+      await navigator.clipboard.writeText(barcode);
+      this.copiedProductId.set(productId);
+
+      // Reset do estado após 2 segundos
+      setTimeout(() => {
+        this.copiedProductId.set(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Erro ao copiar código de barras:', err);
+    }
+  }
+
+  isCopied(productId: string): boolean {
+    return this.copiedProductId() === productId;
+  }
 }

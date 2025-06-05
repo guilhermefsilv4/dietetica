@@ -11,7 +11,9 @@ import {
   faArrowDown,
   faSliders,
   faBoxesStacked,
-  faSearch
+  faSearch,
+  faClipboard,
+  faClipboardCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
@@ -27,7 +29,15 @@ import { PaginationComponent } from '@components/shared/pagination/pagination.co
     PaginationComponent
   ],
   templateUrl: './stock.component.html',
-  styles: ``
+  styles: [`
+    .copy-button {
+      @apply opacity-0 text-gray-400 hover:text-blue-600 transition-all duration-200 p-1 rounded-full hover:bg-blue-50;
+    }
+
+    .copied {
+      @apply text-green-500 bg-green-50;
+    }
+  `]
 })
 export class StockComponent {
   // Ícones
@@ -36,6 +46,8 @@ export class StockComponent {
   protected faSliders = faSliders;
   protected faBoxesStacked = faBoxesStacked;
   protected faSearch = faSearch;
+  protected faClipboard = faClipboard;
+  protected faClipboardCheck = faClipboardCheck;
 
   // Estado do componente
   searchTerm = signal('');
@@ -49,6 +61,9 @@ export class StockComponent {
   // Estado da paginação
   currentPage = signal(1);
   pageSize = signal(10);
+
+  // Estado de cópia
+  private copiedBarcode = signal<string | null>(null);
 
   constructor(
     private productService: ProductService,
@@ -195,5 +210,26 @@ export class StockComponent {
       // TODO: Adicionar um componente de toast/notificação para erros
       alert('Erro ao registrar movimentação. Por favor, tente novamente.');
     }
+  }
+
+  // Métodos de cópia de código de barras
+  async copyBarcode(barcode: string, event: Event) {
+    event.stopPropagation(); // Previne a propagação do evento
+
+    try {
+      await navigator.clipboard.writeText(barcode);
+      this.copiedBarcode.set(barcode);
+
+      // Reset do estado após 2 segundos
+      setTimeout(() => {
+        this.copiedBarcode.set(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Erro ao copiar código de barras:', err);
+    }
+  }
+
+  isCopied(barcode: string): boolean {
+    return this.copiedBarcode() === barcode;
   }
 }

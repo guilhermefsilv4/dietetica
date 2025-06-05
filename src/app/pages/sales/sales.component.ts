@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
@@ -12,6 +12,7 @@ import { Payment, PaymentMethod } from '@interfaces/payment.interface';
 import { ProductVariant } from '@interfaces/product-variant.interface';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
+import { debounceTime, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-sales',
@@ -118,11 +119,20 @@ export class SalesComponent {
     return Math.max(0, totalPaid - saleTotal);
   });
 
+  private searchSubject = new Subject<string>();
+
   constructor(
     private productService: ProductService,
     private saleService: SaleService,
     private ticketService: TicketService
-  ) {}
+  ) {
+    // Configurar debounce para busca
+    this.searchSubject.pipe(
+      debounceTime(300)
+    ).subscribe(term => {
+      this.searchTerm.set(term);
+    });
+  }
 
   // Computed properties
   availableProducts = computed(() => {
@@ -335,8 +345,7 @@ export class SalesComponent {
 
   // Métodos de filtro
   onSearchChange(term: string) {
-    this.searchTerm.set(term);
-    this.currentPage.set(1); // Resetar para primeira página ao buscar
+    this.searchSubject.next(term);
   }
 
   onDateFilterChange(filter: 'today' | 'week' | 'month' | 'all') {

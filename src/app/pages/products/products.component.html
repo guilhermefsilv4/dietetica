@@ -64,14 +64,28 @@
             <tbody class="divide-y divide-gray-200 bg-white">
               <tr *ngFor="let product of paginatedProducts()" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
+                  <div class="flex items-center gap-2 group">
                     <div class="h-10 w-10 flex-shrink-0">
                       <img [src]="product.imageUrl" class="h-10 w-10 rounded-full object-cover" />
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
                       <div class="text-sm text-gray-500">{{ product.brand }}</div>
+                      <div class="text-xs text-gray-500">{{ product.barcode }}</div>
                     </div>
+                    <button
+                      (click)="copyBarcode(product.barcode, $event)"
+                      class="copy-button group-hover:opacity-100 ml-1"
+                      [class.copied]="isCopied(product.barcode)"
+                      [attr.aria-label]="'Copiar código ' + product.barcode"
+                    >
+                      <app-tooltip [text]="isCopied(product.barcode) ? 'Copiado!' : 'Copiar código'">
+                        <fa-icon
+                          [icon]="isCopied(product.barcode) ? faClipboardCheck : faClipboard"
+                          class="text-base"
+                        />
+                      </app-tooltip>
+                    </button>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

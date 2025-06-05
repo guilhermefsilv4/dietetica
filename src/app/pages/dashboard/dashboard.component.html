@@ -34,7 +34,7 @@
   <!-- Métricas -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     @if (isLoadingState()) {
-      @for (i of [1,2,3]; track i) {
+      @for (i of [1,2,3]; track trackByIndex(i)) {
         <div class="bg-white rounded-lg shadow p-6">
           <div class="h-6 w-32 skeleton mb-2"></div>
           <div class="h-8 w-16 skeleton"></div>
@@ -66,7 +66,7 @@
     <h2 class="text-xl font-bold text-gray-800 mb-4">Productos con Stock Bajo</h2>
     @if (isLoadingState()) {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @for (i of [1,2,3]; track i) {
+        @for (i of [1,2,3]; track trackByIndex(i)) {
           <div class="h-48 skeleton rounded-lg"></div>
         }
       </div>
@@ -129,9 +129,25 @@
                   </app-tooltip>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <app-tooltip [text]="'ID: ' + movement.productId">
-                    {{ getProductName(movement.productId) }}
-                  </app-tooltip>
+                  <div class="flex items-center gap-2 group">
+                    <div>
+                      <div class="font-medium">{{ getProductName(movement.productId) }}</div>
+                      <div class="text-xs text-gray-500">{{ getProductBarcode(movement.productId) }}</div>
+                    </div>
+                    <button
+                      (click)="copyBarcode(movement.productId, $event)"
+                      class="copy-button group-hover:opacity-100 ml-1"
+                      [class.copied]="isCopied(movement.productId)"
+                      [attr.aria-label]="'Copiar código ' + getProductBarcode(movement.productId)"
+                    >
+                      <app-tooltip [text]="isCopied(movement.productId) ? 'Copiado!' : 'Copiar código'">
+                        <fa-icon
+                          [icon]="isCopied(movement.productId) ? faClipboardCheck : faClipboard"
+                          class="text-base"
+                        />
+                      </app-tooltip>
+                    </button>
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <app-tooltip [text]="'Tipo de movimiento: ' + movement.type">
