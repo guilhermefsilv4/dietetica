@@ -119,6 +119,58 @@
             font-weight: bold;
         }
 
+        .debug-info {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-info.show {
+            display: block;
+        }
+
+        .debug-line {
+            margin: 2px 0;
+            color: #333;
+        }
+
+        .debug-line.error {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .debug-line.success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .debug-line.info {
+            color: #2196F3;
+        }
+
+        .toggle-debug {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+        .toggle-debug:hover {
+            background: #555;
+        }
+
         .info {
             background: #e3f2fd;
             padding: 15px;
@@ -166,50 +218,111 @@
             <div class="spinner"></div>
             <div class="status" id="status">Iniciando servidores...</div>
         </div>
+
+        <button class="toggle-debug" onclick="toggleDebug()">Ver información técnica</button>
+
+        <div class="debug-info" id="debug-info">
+            <div id="debug-log"></div>
+        </div>
     </div>
 
-    <script>
+        <script>
         const { ipcRenderer } = require('electron');
 
+        let debugMessages = [];
+
+        // Listen for status updates from main process
+        ipcRenderer.on('status-update', (event, message) => {
+            updateStatus(message);
+            addDebugMessage(message, 'info');
+        });
+
         async function startApplication(environment) {
+            addDebugMessage(`Iniciando aplicación en modo: ${environment}`, 'info');
+
             // Disable buttons
             document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
 
             // Show loading
             document.getElementById('loading').style.display = 'block';
+            updateStatus('Configurando entorno...');
 
             try {
-                updateStatus('Iniciando backend...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                updateStatus('Iniciando frontend...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                updateStatus('Configurando entorno...');
-
+                addDebugMessage('Enviando solicitud para iniciar servidores...', 'info');
                 const result = await ipcRenderer.invoke('start-servers', environment);
 
                 if (result.success) {
                     updateStatus('¡Aplicación iniciada correctamente!');
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    addDebugMessage('Aplicación iniciada exitosamente', 'success');
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Error desconocido');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                updateStatus('Error: ' + error.message);
+                const errorMsg = `Error al iniciar: ${error.message}`;
+                updateStatus(errorMsg);
+                addDebugMessage(errorMsg, 'error');
+
+                // Show debug info automatically on error
+                document.getElementById('debug-info').classList.add('show');
 
                 // Re-enable buttons after error
                 setTimeout(() => {
                     document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
                     document.getElementById('loading').style.display = 'none';
-                }, 3000);
+                }, 5000);
             }
         }
 
         function updateStatus(message) {
-            document.getElementById('status').textContent = message;
+            const statusElement = document.getElementById('status');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
         }
+
+        function addDebugMessage(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const debugMessage = {
+                time: timestamp,
+                message: message,
+                type: type
+            };
+
+            debugMessages.push(debugMessage);
+
+            // Keep only last 50 messages
+            if (debugMessages.length > 50) {
+                debugMessages = debugMessages.slice(-50);
+            }
+
+            updateDebugDisplay();
+        }
+
+        function updateDebugDisplay() {
+            const debugLog = document.getElementById('debug-log');
+            if (debugLog) {
+                debugLog.innerHTML = debugMessages.map(msg =>
+                    `<div class="debug-line ${msg.type}">[${msg.time}] ${msg.message}</div>`
+                ).join('');
+
+                // Scroll to bottom
+                debugLog.scrollTop = debugLog.scrollHeight;
+            }
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debug-info');
+            if (debugInfo.classList.contains('show')) {
+                debugInfo.classList.remove('show');
+            } else {
+                debugInfo.classList.add('show');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            addDebugMessage('Página de configuración cargada', 'success');
+        });
     </script>
 </body>
 </html>
