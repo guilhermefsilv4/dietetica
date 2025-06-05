@@ -4,8 +4,9 @@
       <!-- Logo e Menu Desktop -->
       <div class="flex">
         <div class="flex-shrink-0 flex items-center">
-          <a routerLink="/dashboard"
-             routerLinkActive="border-green-500 text-gray-900" class="text-xl md:text-2xl font-bold text-green-600">La Buena Semilla</a>
+          <a routerLink="/dashboard" class="h-8">
+            <img src="assets/logosemfundo.png" alt="La Buena Semilla" class="h-full">
+          </a>
         </div>
         <!-- Menu Desktop -->
         <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
@@ -13,7 +14,7 @@
             routerLink="/dashboard"
             routerLinkActive="border-green-500 text-gray-900"
             [routerLinkActiveOptions]="{ exact: true }"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faDashboard" class="mr-2"></fa-icon>
             Panel
@@ -21,7 +22,7 @@
           <a
             routerLink="/products"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faBox" class="mr-2"></fa-icon>
             Productos
@@ -29,7 +30,7 @@
           <a
             routerLink="/stock"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faBoxes" class="mr-2"></fa-icon>
             Stock
@@ -37,7 +38,7 @@
           <a
             routerLink="/sales"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faShoppingCart" class="mr-2"></fa-icon>
             Ventas
@@ -45,7 +46,7 @@
           <a
             routerLink="/customers"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faUsers" class="mr-2"></fa-icon>
             Clientes
@@ -53,7 +54,7 @@
           <a
             routerLink="/tickets"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faReceipt" class="mr-2"></fa-icon>
             Tickets
@@ -61,7 +62,7 @@
           <a
             routerLink="/cash-closing"
             routerLinkActive="border-green-500 text-gray-900"
-            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
           >
             <fa-icon [icon]="faCashRegister" class="mr-2"></fa-icon>
             Caja
@@ -70,20 +71,24 @@
       </div>
 
       <!-- Botões da direita -->
-      <div class="flex items-center">
+      <div class="flex items-center space-x-2">
         <!-- Notificações -->
-        <button class="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <button
+          class="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+          title="Notificações"
+        >
           <span class="sr-only">Ver notificaciones</span>
-          <fa-icon [icon]="faBell" class="h-6 w-6"></fa-icon>
+          <fa-icon [icon]="faBell" class="h-5 w-5"></fa-icon>
         </button>
 
         <!-- Botão Menu Mobile -->
         <button
           (click)="toggleMobileMenu()"
-          class="lg:hidden ml-2 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+          class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+          title="Menu"
         >
           <span class="sr-only">Abrir menu</span>
-          <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" class="h-6 w-6"></fa-icon>
+          <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" class="h-5 w-5"></fa-icon>
         </button>
       </div>
     </div>
