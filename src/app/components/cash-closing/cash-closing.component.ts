@@ -108,9 +108,14 @@ export class CashClosingComponent {
   }
 
   async confirmClose() {
-    await this.cashClosingService.closeCurrentClosing(this.actualAmounts, this.notes);
-    this.resetForm();
-    this.showCloseConfirmation.set(false);
+    try {
+      await this.cashClosingService.closeCurrentClosing(this.actualAmounts, this.notes);
+      this.resetForm();
+      this.showCloseConfirmation.set(false);
+    } catch (error) {
+      console.error('Erro ao fechar caixa:', error);
+      // TODO: Mostrar mensagem de erro para o usuário
+    }
   }
 
   cancelClose() {

@@ -1,18 +1,57 @@
 <div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center">
+      <fa-icon [icon]="faBoxesStacked" class="text-3xl text-gray-700 mr-3"></fa-icon>
+      <h1 class="text-2xl font-bold text-gray-900">Panel de Control</h1>
+    </div>
+    <button
+      (click)="refreshData()"
+      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      [class.animate-spin]="isLoadingState()"
+      [disabled]="isLoadingState()"
+      aria-label="Actualizar datos"
+    >
+      <fa-icon [icon]="faSpinner" class="mr-2" *ngIf="isLoadingState()"></fa-icon>
+      <span>Actualizar</span>
+    </button>
+  </div>
+
+  <!-- Estado de Error -->
+  @if (hasErrorState()) {
+    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-8" role="alert">
+      <div class="flex">
+        <fa-icon [icon]="faExclamationTriangle" class="text-red-400 text-lg mr-3"></fa-icon>
+        <div>
+          <p class="text-sm text-red-700">{{ errorMessageState() }}</p>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Métricas -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Total de Productos</h3>
-      <p class="text-3xl font-bold text-blue-600">{{ totalProducts() }}</p>
-    </div>
-    <div class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Productos con Stock Bajo</h3>
-      <p class="text-3xl font-bold text-red-600">{{ lowStockCount() }}</p>
-    </div>
-    <div class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Movimientos Hoy</h3>
-      <p class="text-3xl font-bold text-green-600">{{ todayMovements() }}</p>
-    </div>
+    @if (isLoadingState()) {
+      @for (i of [1,2,3]; track i) {
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="h-6 w-32 skeleton mb-2"></div>
+          <div class="h-8 w-16 skeleton"></div>
+        </div>
+      }
+    } @else {
+      <div class="bg-white rounded-lg shadow p-6 transition-all duration-200 hover:shadow-lg">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Total de Productos</h3>
+        <p class="text-3xl font-bold text-blue-600">{{ totalProducts() }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6 transition-all duration-200 hover:shadow-lg">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Productos con Stock Bajo</h3>
+        <p class="text-3xl font-bold text-red-600">{{ lowStockCount() }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-6 transition-all duration-200 hover:shadow-lg">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Movimientos Hoy</h3>
+        <p class="text-3xl font-bold text-green-600">{{ todayMovements() }}</p>
+      </div>
+    }
   </div>
 
   <!-- Gráficos -->
@@ -23,18 +62,34 @@
   <!-- Productos con Stock Bajo -->
   <div class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-xl font-bold text-gray-800 mb-4">Productos con Stock Bajo</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (product of lowStockProducts(); track product.id) {
-        <app-product-card [productData]="product" />
-      }
-    </div>
+    @if (isLoadingState()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (i of [1,2,3]; track i) {
+          <div class="h-48 skeleton rounded-lg"></div>
+        }
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (product of lowStockProducts(); track product.id) {
+          <app-product-card [productData]="product" />
+        }
+      </div>
+    }
   </div>
 
   <!-- Movimientos Recientes -->
   <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Movimientos Recientes</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-800">Movimientos Recientes</h2>
+      <div class="text-sm text-gray-500">
+        @if (!isLoadingState() && recentMovements().length > 0) {
+          Mostrando {{ (currentPageNumber() - 1) * 10 + 1 }} - {{ Math.min(currentPageNumber() * 10, recentMovements().length) }} de {{ recentMovements().length }} movimientos
+        }
+      </div>
+    </div>
+
     <div class="overflow-x-auto">
-      @if (recentMovements().length > 0) {
+      @if (isLoadingState()) {
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -46,8 +101,31 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            @for (movement of recentMovements(); track movement.id) {
+            @for (i of [1,2,3,4,5]; track i) {
               <tr>
+                <td class="px-6 py-4"><div class="h-4 w-24 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-4 w-32 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-4 w-20 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-4 w-16 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-4 w-16 skeleton"></div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else if (recentMovements().length > 0) {
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Final</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (movement of recentMovements(); track movement.id) {
+              <tr class="movement-row">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ movement.date | date:'dd/MM/yyyy HH:mm' }}
                 </td>
@@ -56,6 +134,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <span [class]="getMovementTypeClass(movement.type)">
+                    <fa-icon [icon]="getMovementTypeIcon(movement.type)" class="text-xs"></fa-icon>
                     {{ movement.type }}
                   </span>
                 </td>
@@ -69,6 +148,58 @@
             }
           </tbody>
         </table>
+
+        <!-- Controles de Paginação -->
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+          <div class="flex justify-between flex-1 sm:hidden">
+            <button
+              (click)="previousPage()"
+              [disabled]="currentPageNumber() === 1"
+              class="pagination-button"
+              aria-label="Página anterior"
+            >
+              Anterior
+            </button>
+            <button
+              (click)="nextPage()"
+              [disabled]="currentPageNumber() === totalPages()"
+              class="pagination-button ml-3"
+              aria-label="Página siguiente"
+            >
+              Siguiente
+            </button>
+          </div>
+          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Página <span class="font-medium">{{ currentPageNumber() }}</span> de
+                <span class="font-medium">{{ totalPages() }}</span>
+              </p>
+            </div>
+            <div>
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  (click)="previousPage()"
+                  [disabled]="currentPageNumber() === 1"
+                  class="pagination-button rounded-l-md"
+                  aria-label="Página anterior"
+                >
+                  <span class="sr-only">Anterior</span>
+                  <fa-icon [icon]="faChevronLeft" class="h-5 w-5"></fa-icon>
+                </button>
+                <button
+                  (click)="nextPage()"
+                  [disabled]="currentPageNumber() === totalPages()"
+                  class="pagination-button rounded-r-md"
+                  aria-label="Página siguiente"
+                >
+                  <span class="sr-only">Siguiente</span>
+                  <fa-icon [icon]="faChevronRight" class="h-5 w-5"></fa-icon>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
       } @else {
         <div class="text-center py-12">
           <fa-icon [icon]="faBoxesStacked" class="text-gray-400 text-5xl mb-4"></fa-icon>

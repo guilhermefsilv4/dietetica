@@ -684,7 +684,7 @@ app.put('/api/cash-closings/:id', (req, res) => {
           res.status(500).json({ error: err.message });
           return;
         }
-        res.json(row);
+        res.json(mapCashClosingToApi(row));
       });
     }
   );

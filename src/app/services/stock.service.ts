@@ -166,10 +166,19 @@ export class StockService {
     return this.stockMovementsDb().filter(movement => movement.productId === productId);
   }
 
-  getRecentMovementsDb(limit: number = 10) {
-    return [...this.stockMovementsDb()]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
+  getRecentMovementsDb(page: number = 1, pageSize: number = 10) {
+    const sortedMovements = [...this.stockMovementsDb()]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    return {
+      movements: sortedMovements.slice(start, end),
+      total: sortedMovements.length,
+      totalPages: Math.ceil(sortedMovements.length / pageSize),
+      currentPage: page
+    };
   }
 
   getStockMovementsByDateRangeDb(startDate: Date, endDate: Date) {
