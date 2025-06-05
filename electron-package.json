@@ -1,0 +1,52 @@
+{
+  "name": "dietetica-electron",
+  "version": "1.0.0",
+  "description": "Aplicación de escritorio Dietetíca para Windows",
+  "main": "src/main.js",
+  "scripts": {
+    "electron": "electron .",
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "dist": "npm run build-win"
+  },
+  "build": {
+    "appId": "com.dietetica.app",
+    "productName": "Dietetíca",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "backend-sqlite/**/*",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "backend-sqlite",
+        "to": "backend-sqlite",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.7",
+    "cors": "^2.8.5"
+  }
+}
