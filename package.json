@@ -5,6 +5,11 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:dev": "ng build --configuration development",
+    "serve:build": "serve dist/dietetica/browser -p 4200",
+    "backend:dev": "cd backend-sqlite && npm run dev",
+    "backend:serve": "cd backend-sqlite && npm run serve",
+    "backend:start": "cd backend-sqlite && npm start",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -39,6 +44,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.4.33",
+    "serve": "^14.2.4",
     "tailwindcss": "^3.4.0",
     "typescript": "~5.8.2"
   }
