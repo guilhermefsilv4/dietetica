@@ -46,6 +46,18 @@ export class SaleService {
     return computed(() => this.sales().slice(0, 10));
   }
 
+  // Buscar vendas paginadas
+  getPaginatedSales(page: number, itemsPerPage: number) {
+    return computed(() => {
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      return {
+        items: this.sales().slice(start, end),
+        total: this.sales().length
+      };
+    });
+  }
+
   // Buscar vendas do dia
   getTodaySales() {
     return computed(() => {
