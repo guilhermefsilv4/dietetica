@@ -5,8 +5,12 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "serve:backend": "cd backend-sqlite && npm run serve",
+    "build-and-serve": "npm run build:prod && cd backend-sqlite && npm run serve",
+    "install:all": "npm install && cd backend-sqlite && npm install"
   },
   "private": true,
   "dependencies": {

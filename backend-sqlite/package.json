@@ -6,6 +6,8 @@
   "scripts": {
     "start": "NODE_ENV=production node src/index.js",
     "dev": "NODE_ENV=development node src/index.js",
+    "serve": "node src/index.js",
+    "build-and-serve": "cd .. && npm run build && cd backend-sqlite && npm run serve",
     "test": "echo \"Error: no test specified\" && exit 1",
     "init-db": "sqlite3 src/database/dietetica.db < src/database/schema.sql && sqlite3 src/database/dietetica.db < src/database/seed.sql"
   },

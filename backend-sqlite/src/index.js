@@ -17,6 +17,9 @@ console.log(`Usando banco: ${dbName}`);
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos estáticos do Angular
+app.use(express.static(path.join(__dirname, '../../dist/dietetica/browser')));
+
 // Conexão com o banco
 const db = new sqlite3.Database(path.join(__dirname, 'database', dbName), async (err) => {
   if (err) {
@@ -694,6 +697,11 @@ app.put('/api/cash-closings/:id', (req, res) => {
       });
     }
   );
+});
+
+// Rota catch-all para o Angular (deve vir por último)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../dist/dietetica/browser/index.html'));
 });
 
 // Iniciar o servidor
