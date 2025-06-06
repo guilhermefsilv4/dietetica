@@ -2,10 +2,18 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { initializeDatabase } = require('./database/init');
 
 const app = express();
 const port = 3000;
+
+// Função auxiliar para resolver caminhos no pkg
+const resolvePath = (relativePath) => {
+  return process.pkg
+    ? path.join(path.dirname(process.execPath), relativePath)
+    : path.join(__dirname, relativePath);
+};
 
 // Determina o ambiente (dev ou prod)
 const isDev = process.env.NODE_ENV === 'development';
@@ -17,15 +25,32 @@ console.log(`Usando banco: ${dbName}`);
 app.use(cors());
 app.use(express.json());
 
+// Diretório do frontend Angular
+const angularPath = process.pkg
+  ? path.join(path.dirname(process.execPath), 'frontend')
+  : path.join(__dirname, '../../dist/dietetica/browser');
+
+// Garantir que o diretório do banco existe
+const dbDir = process.pkg
+  ? path.join(path.dirname(process.execPath), 'database')
+  : path.join(__dirname, 'database');
+
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 // Servir arquivos estáticos do Angular
-app.use(express.static(path.join(__dirname, '../../dist/dietetica/browser')));
+app.use(express.static(angularPath));
+
+// Caminho do banco de dados
+const dbPath = path.join(dbDir, dbName);
 
 // Conexão com o banco
-const db = new sqlite3.Database(path.join(__dirname, 'database', dbName), async (err) => {
+const db = new sqlite3.Database(dbPath, async (err) => {
   if (err) {
     console.error('Erro ao conectar ao banco:', err);
   } else {
-    console.log('Conectado ao banco SQLite');
+    console.log('Conectado ao banco SQLite em:', dbPath);
     try {
       await initializeDatabase(db);
       console.log('Banco de dados inicializado com sucesso');
@@ -701,10 +726,20 @@ app.put('/api/cash-closings/:id', (req, res) => {
 
 // Rota catch-all para o Angular (deve vir por último)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../dist/dietetica/browser/index.html'));
+  res.sendFile(path.join(angularPath, 'index.html'));
 });
 
 // Iniciar o servidor
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`
+╔════════════════════════════════════════════════════════════╗
+║                   SISTEMA LOJA - BACKEND                    ║
+║                                                            ║
+║  🌐 Servidor rodando em: http://localhost:${port}           ║
+║  📂 Frontend em: ${angularPath}                            ║
+║  💾 Banco em: ${dbPath}                                    ║
+║                                                            ║
+║  Para acessar, abra no navegador: http://localhost:${port}  ║
+╚════════════════════════════════════════════════════════════╝
+  `);
 });

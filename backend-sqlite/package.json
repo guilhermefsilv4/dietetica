@@ -3,23 +3,36 @@
   "version": "1.0.0",
   "description": "Backend SQLite para a aplicação Dietetica",
   "main": "src/index.js",
+  "bin": "src/index.js",
+  "pkg": {
+    "assets": [
+      "src/database/**/*",
+      "../../dist/dietetica/browser/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  },
   "scripts": {
     "start": "NODE_ENV=production node src/index.js",
     "dev": "NODE_ENV=development node src/index.js",
     "serve": "node src/index.js",
     "build-and-serve": "cd .. && npm run build && cd backend-sqlite && npm run serve",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "init-db": "sqlite3 src/database/dietetica.db < src/database/schema.sql && sqlite3 src/database/dietetica.db < src/database/seed.sql"
+    "init-db": "sqlite3 src/database/dietetica.db < src/database/schema.sql && sqlite3 src/database/dietetica.db < src/database/seed.sql",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/sistema-loja.exe"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "sqlite3": "^5.1.7",
-    "cors": "^2.8.5"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "pkg": "^5.8.1"
   }
 }
