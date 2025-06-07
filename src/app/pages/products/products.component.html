@@ -235,6 +235,12 @@
                   type="text"
                   [(ngModel)]="productForm.barcode"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('barcode')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('barcode')"
+                  [message]="getFieldError('barcode') || ''"
                 />
               </div>
 
@@ -246,17 +252,29 @@
                   type="text"
                   [(ngModel)]="productForm.name"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('name')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('name')"
+                  [message]="getFieldError('name') || ''"
                 />
               </div>
 
               <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">
-                  Marca
+                  Proveedor
                 </label>
                 <input
                   type="text"
                   [(ngModel)]="productForm.brand"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('brand')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('brand')"
+                  [message]="getFieldError('brand') || ''"
                 />
               </div>
 
@@ -268,6 +286,12 @@
                   type="text"
                   [(ngModel)]="productForm.category"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('category')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('category')"
+                  [message]="getFieldError('category') || ''"
                 />
               </div>
 
@@ -279,7 +303,13 @@
                   [(ngModel)]="productForm.description"
                   rows="3"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('description')"
+                  (input)="onFieldChange()"
                 ></textarea>
+                <app-field-error
+                  [show]="!!getFieldError('description')"
+                  [message]="getFieldError('description') || ''"
+                />
               </div>
             </div>
 
@@ -306,10 +336,16 @@
                   <select
                     [(ngModel)]="productForm.weightUnit"
                     class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [class.border-red-500]="getFieldError('weightUnit')"
+                    (change)="onFieldChange()"
                   >
                     <option value="kg">Kilogramos (kg)</option>
                     <option value="g">Gramos (g)</option>
                   </select>
+                  <app-field-error
+                    [show]="!!getFieldError('weightUnit')"
+                    [message]="getFieldError('weightUnit') || ''"
+                  />
                 </div>
               }
 
@@ -321,6 +357,12 @@
                   type="number"
                   [(ngModel)]="productForm.price"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('price')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('price')"
+                  [message]="getFieldError('price') || ''"
                 />
               </div>
 
@@ -333,6 +375,12 @@
                   [(ngModel)]="productForm.stock"
                   [disabled]="!!editingProduct"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('stock')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('stock')"
+                  [message]="getFieldError('stock') || ''"
                 />
               </div>
 
@@ -344,37 +392,48 @@
                   type="number"
                   [(ngModel)]="productForm.minStock"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="getFieldError('minStock')"
+                  (input)="onFieldChange()"
+                />
+                <app-field-error
+                  [show]="!!getFieldError('minStock')"
+                  [message]="getFieldError('minStock') || ''"
                 />
               </div>
 
               <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">
-                  URL de la Imagen
+                  URL de la Imagen <span class="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <input
                   type="text"
                   [(ngModel)]="productForm.imageUrl"
+                  placeholder="Deje vacío para usar imagen por defecto"
                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p class="text-xs text-gray-500 mt-1">
+                  Si no proporciona una URL, se usará una imagen por defecto
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="p-6 border-t border-gray-200 flex justify-end gap-4">
-          <button
-            (click)="closeModal()"
-            class="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancelar
-          </button>
-          <button
-            (click)="saveProduct()"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            [disabled]="!isValidProduct()"
-          >
-            Guardar
-          </button>
+        <div class="p-6 border-t border-gray-200">
+          <div class="flex justify-end gap-4">
+            <button
+              (click)="closeModal()"
+              class="px-4 py-2 text-gray-600 hover:text-gray-800 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              (click)="saveProduct()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-all duration-200"
+            >
+              Guardar
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -19,11 +19,12 @@ import {
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
+import { FieldErrorComponent } from '../../components/field-error/field-error.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, PaginationComponent],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, TooltipComponent, ConfirmationModalComponent, PaginationComponent, FieldErrorComponent],
   templateUrl: './products.component.html',
   styles: [`
     .copy-button {
@@ -66,6 +67,9 @@ export class ProductsComponent {
 
   // Estado do dropdown de exportação
   showExportDropdown = signal(false);
+
+  // Estado de validação - para mostrar erros após tentar salvar
+  showValidationErrors = signal(false);
 
   productForm: Partial<Product> = {
     name: '',
@@ -157,6 +161,8 @@ export class ProductsComponent {
 
   // Métodos de manipulação do modal
   async openProductModal(product?: Product) {
+    this.showValidationErrors.set(false); // Reset validation errors
+
     if (product) {
       this.editingProduct = product;
       this.productForm = { ...product };
@@ -180,6 +186,7 @@ export class ProductsComponent {
 
   closeModal() {
     this.showModal.set(false);
+    this.showValidationErrors.set(false); // Reset validation errors
     this.editingProduct = null;
     this.productForm = {
       name: '',
@@ -206,21 +213,151 @@ export class ProductsComponent {
       this.productForm.saleType &&
       this.productForm.minStock &&
       (this.editingProduct || this.productForm.stock) &&
-      this.productForm.imageUrl &&
       (this.productForm.saleType !== 'weight' || this.productForm.weightUnit)
     );
   }
 
+  getValidationMessages(): string[] {
+    const messages: string[] = [];
+
+    if (!this.productForm.name || this.productForm.name.trim() === '') {
+      messages.push('El nombre del producto es obligatorio');
+    }
+
+    if (!this.productForm.brand || this.productForm.brand.trim() === '') {
+      messages.push('El proveedor es obligatorio');
+    }
+
+    if (!this.productForm.category || this.productForm.category.trim() === '') {
+      messages.push('El rubro es obligatorio');
+    }
+
+    if (!this.productForm.description || this.productForm.description.trim() === '') {
+      messages.push('La descripción es obligatoria');
+    }
+
+    if (!this.productForm.barcode || this.productForm.barcode.trim() === '') {
+      messages.push('El código de barras es obligatorio');
+    }
+
+    if (!this.productForm.price || this.productForm.price <= 0) {
+      messages.push('El precio debe ser mayor a cero');
+    }
+
+    if (!this.productForm.minStock || this.productForm.minStock < 0) {
+      messages.push('El stock mínimo debe ser mayor o igual a cero');
+    }
+
+    if (!this.editingProduct && (!this.productForm.stock || this.productForm.stock < 0)) {
+      messages.push('El stock inicial debe ser mayor o igual a cero');
+    }
+
+    if (this.productForm.saleType === 'weight' && !this.productForm.weightUnit) {
+      messages.push('Debés seleccionar la unidad de peso para productos vendidos por peso');
+    }
+
+    return messages;
+  }
+
+  // Funções para validar campos específicos
+  getFieldError(field: string): string | null {
+    if (!this.showValidationErrors()) return null;
+
+    switch (field) {
+      case 'name':
+        if (!this.productForm.name || this.productForm.name.trim() === '') {
+          return 'El nombre del producto es obligatorio';
+        }
+        break;
+
+      case 'brand':
+        if (!this.productForm.brand || this.productForm.brand.trim() === '') {
+          return 'El proveedor es obligatorio';
+        }
+        break;
+
+      case 'category':
+        if (!this.productForm.category || this.productForm.category.trim() === '') {
+          return 'El rubro es obligatorio';
+        }
+        break;
+
+      case 'description':
+        if (!this.productForm.description || this.productForm.description.trim() === '') {
+          return 'La descripción es obligatoria';
+        }
+        break;
+
+      case 'barcode':
+        if (!this.productForm.barcode || this.productForm.barcode.trim() === '') {
+          return 'El código de barras es obligatorio';
+        }
+        break;
+
+      case 'price':
+        if (!this.productForm.price || this.productForm.price <= 0) {
+          return 'El precio debe ser mayor a cero';
+        }
+        break;
+
+      case 'stock':
+        if (!this.editingProduct && (!this.productForm.stock || this.productForm.stock < 0)) {
+          return 'El stock inicial debe ser mayor o igual a cero';
+        }
+        break;
+
+      case 'minStock':
+        if (!this.productForm.minStock || this.productForm.minStock < 0) {
+          return 'El stock mínimo debe ser mayor o igual a cero';
+        }
+        break;
+
+      case 'weightUnit':
+        if (this.productForm.saleType === 'weight' && !this.productForm.weightUnit) {
+          return 'Debés seleccionar la unidad de peso';
+        }
+        break;
+    }
+
+    return null;
+  }
+
+  // Método para limpar erros quando usuário começar a digitar
+  onFieldChange() {
+    this.showValidationErrors.set(false);
+  }
+
+  // Opções para selects
+  saleTypeOptions = [
+    { value: 'unit', label: 'Por Unidad' },
+    { value: 'weight', label: 'Por Peso' }
+  ];
+
+  weightUnitOptions = [
+    { value: 'kg', label: 'Kilogramos (kg)' },
+    { value: 'g', label: 'Gramos (g)' }
+  ];
+
   async saveProduct() {
+    // Ativa a exibição de erros de validação
+    this.showValidationErrors.set(true);
+
+    // Verifica se o produto é válido
     if (!this.isValidProduct()) {
-      return;
+      return; // Para aqui se inválido, mas os erros já estão sendo mostrados
     }
 
     try {
+      // Se não foi fornecida uma URL de imagem, usar a imagem padrão
+      const productData = { ...this.productForm };
+      if (!productData.imageUrl || productData.imageUrl.trim() === '') {
+        productData.imageUrl = 'assets/sinimagen.jpg';
+      }
+
       if (this.editingProduct) {
-        await this.productService.updateProductDb(this.editingProduct.id, this.productForm as Product);
+        await this.productService.updateProductDb(this.editingProduct.id, productData as Product);
       } else {
-        await this.productService.addProductDb(this.productForm as Product);
+        await this.productService.addProductDb(productData as Product);
       }
       this.closeModal();
     } catch (error) {

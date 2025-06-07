@@ -1,5 +1,5 @@
 <div class="container mx-auto px-4 py-8">
-  <!-- Header -->
+    <!-- Header -->
   <div class="flex items-center justify-between mb-8">
     <div class="flex items-center">
       <fa-icon [icon]="faBoxesStacked" class="text-3xl text-gray-700 mr-3"></fa-icon>
@@ -8,14 +8,15 @@
     <button
       (click)="refreshData()"
       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      [class.animate-spin]="isLoadingState()"
       [disabled]="isLoadingState()"
       aria-label="Actualizar datos"
     >
       @if (isLoadingState()) {
-        <fa-icon [icon]="faSpinner" class="mr-2"/>
+        <fa-icon [icon]="faSpinner" class="mr-2 animate-spin"/>
+      } @else {
+        <fa-icon [icon]="faSync" class="mr-2"/>
       }
-      <span>Actualizar</span>
+      <span>{{ isLoadingState() ? 'Actualizando...' : 'Actualizar' }}</span>
     </button>
   </div>
 

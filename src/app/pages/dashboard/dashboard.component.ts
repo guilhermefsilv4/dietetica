@@ -1,4 +1,4 @@
-import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '@services/product.service';
 import { StockService } from '@services/stock.service';
@@ -70,7 +70,7 @@ import { TooltipComponent } from '@components/tooltip/tooltip.component';
     }
   `]
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   // Referência ao Math para usar no template
   protected Math = Math;
 
@@ -87,7 +87,7 @@ export class DashboardComponent {
   protected faClipboardCheck = faClipboardCheck;
 
   // Estados
-  private isLoading = signal(true);
+  private isLoading = signal(false);
   private hasError = signal(false);
   private errorMessage = signal('');
 
@@ -153,8 +153,11 @@ export class DashboardComponent {
   constructor(
     private productService: ProductService,
     private stockService: StockService
-  ) {
-    this.loadData();
+  ) {}
+
+  async ngOnInit() {
+    // Os dados já são carregados automaticamente pelos serviços via observables
+    // Não precisa carregar manualmente aqui
   }
 
   // Track by functions
@@ -166,25 +169,20 @@ export class DashboardComponent {
     return index;
   }
 
-  private async loadData() {
+  async refreshData() {
+    this.isLoading.set(true);
     try {
-      this.isLoading.set(true);
-      this.hasError.set(false);
       await Promise.all([
-        this.productService.loadProductsDb(),
-        this.stockService.loadStockMovementsDb()
+        this.productService.refreshProducts(),
+        this.stockService.refreshMovements()
       ]);
     } catch (error) {
       this.hasError.set(true);
-      this.errorMessage.set('Error al cargar los datos. Por favor, intente nuevamente.');
-      console.error('Erro ao carregar dados:', error);
+      this.errorMessage.set('Error al actualizar los datos. Por favor, intente nuevamente.');
+      console.error('Erro ao atualizar dados:', error);
     } finally {
       this.isLoading.set(false);
     }
-  }
-
-  async refreshData() {
-    await this.loadData();
   }
 
   // Métricas
@@ -332,15 +330,11 @@ export class DashboardComponent {
         this.movementDescription
       );
 
-      // Atualiza a lista de movimentações
-      await this.stockService.loadStockMovementsDb();
-
+      // Os observables já vão atualizar automaticamente
       this.closeModal();
-      // TODO: Adicionar um componente de toast/notificação para feedback
       console.log('Movimentação registrada com sucesso!');
     } catch (error) {
       console.error('Erro ao registrar movimentação:', error);
-      // TODO: Adicionar um componente de toast/notificação para erros
       alert('Erro ao registrar movimentação. Por favor, tente novamente.');
     }
   }

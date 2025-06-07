@@ -3,18 +3,26 @@ import { StockMovement, StockMovementType } from '@interfaces/stock-movement.int
 import { MOCK_STOCK_MOVEMENTS } from '@app/mocks/stock-movements.mock';
 import { ProductService } from '@services/product.service';
 import { HttpService } from './http.service';
+import { from, Observable } from 'rxjs';
+import { shareReplay, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StockService {
   private stockMovements = signal<StockMovement[]>(MOCK_STOCK_MOVEMENTS);
+
+  // Signal para movimentações do banco - mantém compatibilidade total
   private stockMovementsDb = signal<StockMovement[]>([]);
+
+  // Observable com shareReplay para cache automático do carregamento
+  private loadMovements$: Observable<StockMovement[]> | null = null;
 
   constructor(
     private productService: ProductService,
     private http: HttpService
   ) {
+    // Carrega dados automaticamente na primeira vez
     this.loadStockMovementsDb();
   }
 
@@ -92,18 +100,35 @@ export class StockService {
     return this.stockMovements().filter(movement => movement.type === type);
   }
 
-  // Métodos para movimentações do banco SQLite
+  // Métodos para movimentações do banco SQLite com cache inteligente
   getStockMovementsDb() {
     return this.stockMovementsDb();
   }
 
   async loadStockMovementsDb() {
+    // Se já temos um observable cached, use-o
+    if (this.loadMovements$) {
+      try {
+        await this.loadMovements$.toPromise();
+        return;
+      } catch (error) {
+        // Se deu erro, vamos tentar novamente
+        this.loadMovements$ = null;
+      }
+    }
+
+    // Cria um novo observable com shareReplay
+    this.loadMovements$ = from(this.http.get<StockMovement[]>('stock-movements')).pipe(
+      tap(movements => this.stockMovementsDb.set(movements)),
+      shareReplay(1)
+    );
+
     try {
-      const movements = await this.http.get<StockMovement[]>('stock-movements');
-      this.stockMovementsDb.set(movements);
+      await this.loadMovements$.toPromise();
     } catch (error) {
       console.error('Erro ao carregar movimentações do banco:', error);
       this.stockMovementsDb.set([]);
+      this.loadMovements$ = null; // Remove cache em caso de erro
     }
   }
 
@@ -152,8 +177,15 @@ export class StockService {
       };
 
       const savedMovement = await this.http.post<StockMovement>('stock-movements', newMovement);
+
+      // Atualiza o signal com a nova movimentação
       this.stockMovementsDb.update(movements => [...movements, savedMovement]);
+
+      // Atualiza o estoque do produto
       await this.productService.updateProductDb(productId, { stock: currentStock });
+
+      // Invalida o cache para próxima busca pegar dados frescos
+      this.loadMovements$ = null;
 
       return savedMovement;
     } catch (error) {
@@ -190,5 +222,11 @@ export class StockService {
 
   getStockMovementsByTypeDb(type: StockMovementType) {
     return this.stockMovementsDb().filter(movement => movement.type === type);
+  }
+
+  // Método para forçar recarregamento (invalida cache)
+  async refreshMovements() {
+    this.loadMovements$ = null; // Invalida cache
+    await this.loadStockMovementsDb();
   }
 }

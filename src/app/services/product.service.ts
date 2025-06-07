@@ -2,15 +2,23 @@ import { Injectable, signal } from '@angular/core';
 import { Product } from '@interfaces/product.interface';
 import { MOCK_PRODUCTS } from '@app/mocks/products.mock';
 import { HttpService } from './http.service';
+import { from, Observable } from 'rxjs';
+import { shareReplay, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
   private products = signal<Product[]>(MOCK_PRODUCTS);
+
+  // Signal para produtos do banco - mantém compatibilidade total
   private productsDb = signal<Product[]>([]);
 
+  // Observable com shareReplay para cache automático do carregamento
+  private loadProducts$: Observable<Product[]> | null = null;
+
   constructor(private http: HttpService) {
+    // Carrega dados automaticamente na primeira vez
     this.loadProductsDb();
   }
 
@@ -63,18 +71,35 @@ export class ProductService {
     );
   }
 
-  // Métodos para produtos do banco SQLite
+  // Métodos para produtos do banco SQLite com cache inteligente
   getProductsDb() {
     return this.productsDb;
   }
 
   async loadProductsDb() {
+    // Se já temos um observable cached, use-o
+    if (this.loadProducts$) {
+      try {
+        await this.loadProducts$.toPromise();
+        return;
+      } catch (error) {
+        // Se deu erro, vamos tentar novamente
+        this.loadProducts$ = null;
+      }
+    }
+
+    // Cria um novo observable com shareReplay
+    this.loadProducts$ = from(this.http.get<Product[]>('products')).pipe(
+      tap(products => this.productsDb.set(products)),
+      shareReplay(1)
+    );
+
     try {
-      const products = await this.http.get<Product[]>('products');
-      this.productsDb.set(products);
+      await this.loadProducts$.toPromise();
     } catch (error) {
       console.error('Erro ao carregar produtos do banco:', error);
       this.productsDb.set([]);
+      this.loadProducts$ = null; // Remove cache em caso de erro
     }
   }
 
@@ -82,10 +107,12 @@ export class ProductService {
     return this.productsDb().find(product => product.id === id);
   }
 
-    async addProductDb(product: Omit<Product, 'id'>) {
+  async addProductDb(product: Omit<Product, 'id'>) {
     try {
       const newProduct = await this.http.post<Product>('products', product);
       this.productsDb.update(products => [...products, newProduct]);
+      // Invalida o cache para próxima busca pegar dados frescos
+      this.loadProducts$ = null;
       return newProduct;
     } catch (error) {
       console.error('Erro ao adicionar produto no banco:', error);
@@ -109,6 +136,9 @@ export class ProductService {
       this.productsDb.update(products =>
         products.map(p => p.id === id ? updatedProduct : p)
       );
+
+      // Invalida o cache para próxima busca pegar dados frescos
+      this.loadProducts$ = null;
     } catch (error) {
       console.error('Erro ao atualizar produto no banco:', error);
       throw error;
@@ -119,6 +149,8 @@ export class ProductService {
     try {
       await this.http.delete(`products/${id}`);
       this.productsDb.update(products => products.filter(p => p.id !== id));
+      // Invalida o cache para próxima busca pegar dados frescos
+      this.loadProducts$ = null;
     } catch (error) {
       console.error('Erro ao deletar produto no banco:', error);
       throw error;
@@ -129,6 +161,8 @@ export class ProductService {
     try {
       await this.http.delete('products/all');
       this.productsDb.set([]);
+      // Invalida o cache para próxima busca pegar dados frescos
+      this.loadProducts$ = null;
     } catch (error) {
       console.error('Erro ao deletar todos os produtos do banco:', error);
       throw error;
@@ -153,5 +187,11 @@ export class ProductService {
       product.category.toLowerCase().includes(searchTerm) ||
       product.brand.toLowerCase().includes(searchTerm)
     );
+  }
+
+  // Método para forçar recarregamento (invalida cache)
+  async refreshProducts() {
+    this.loadProducts$ = null; // Invalida cache
+    await this.loadProductsDb();
   }
 }
