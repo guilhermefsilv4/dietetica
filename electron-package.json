@@ -27,6 +27,11 @@
         "from": "backend-sqlite",
         "to": "backend-sqlite",
         "filter": ["**/*"]
+      },
+      {
+        "from": "dist/dietetica/browser",
+        "to": "frontend/browser",
+        "filter": ["**/*"]
       }
     ],
     "win": {
