@@ -102,7 +102,7 @@ export class DashboardComponent {
   movementQuantity = 0;
   movementDescription = '';
 
-  // Paginação
+  // Paginação para movimentos
   currentPage = signal(1);
   pageSize = signal(10);
   private movementsData = computed(() =>
@@ -112,6 +112,27 @@ export class DashboardComponent {
   recentMovements = computed(() => this.movementsData().movements);
   totalPages = computed(() => this.movementsData().totalPages);
   totalItems = computed(() => this.movementsData().total || 0);
+
+  // Paginação para produtos com stock baixo
+  lowStockCurrentPage = signal(1);
+  lowStockPageSize = signal(3); // 3 cards por página (1 linha de 3 cards)
+
+  private allLowStockProducts = computed(() =>
+    this.productService.getLowStockProductsDb(20)
+  );
+
+  paginatedLowStockProducts = computed(() => {
+    const products = this.allLowStockProducts();
+    const start = (this.lowStockCurrentPage() - 1) * this.lowStockPageSize();
+    const end = start + this.lowStockPageSize();
+    return products.slice(start, end);
+  });
+
+  lowStockTotalPages = computed(() => {
+    return Math.ceil(this.allLowStockProducts().length / this.lowStockPageSize());
+  });
+
+  lowStockTotalItems = computed(() => this.allLowStockProducts().length);
 
   // Cache de produtos
   private productsMap = computed(() => {
@@ -169,11 +190,9 @@ export class DashboardComponent {
   // Métricas
   totalProducts = computed(() => this.productService.getProductsDb()().length);
 
-  lowStockProducts = computed(() =>
-    this.productService.getLowStockProductsDb(20)
-  );
+  lowStockProducts = computed(() => this.paginatedLowStockProducts());
 
-  lowStockCount = computed(() => this.lowStockProducts().length);
+  lowStockCount = computed(() => this.allLowStockProducts().length);
 
   todayMovements = computed(() => {
     const today = new Date();
@@ -186,7 +205,7 @@ export class DashboardComponent {
     }).length;
   });
 
-  // Paginação
+  // Paginação para movimentos
   onNextPage() {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update(page => page + 1);
@@ -196,6 +215,19 @@ export class DashboardComponent {
   onPreviousPage() {
     if (this.currentPage() > 1) {
       this.currentPage.update(page => page - 1);
+    }
+  }
+
+  // Paginação para produtos com stock baixo
+  onLowStockNextPage() {
+    if (this.lowStockCurrentPage() < this.lowStockTotalPages()) {
+      this.lowStockCurrentPage.update(page => page + 1);
+    }
+  }
+
+  onLowStockPreviousPage() {
+    if (this.lowStockCurrentPage() > 1) {
+      this.lowStockCurrentPage.update(page => page - 1);
     }
   }
 
