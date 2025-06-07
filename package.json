@@ -28,14 +28,19 @@
     "files": [
       "src/**/*",
       "backend-sqlite/**/*",
-      "dist-angular/**/*",
       "node_modules/**/*",
-      "angular.json",
       "package.json",
       "!backend-sqlite/node_modules/.cache/**/*",
       "!node_modules/.cache/**/*"
     ],
     "extraFiles": [
+      {
+        "from": "dist/dietetica/browser",
+        "to": "resources/app/frontend/browser",
+        "filter": [
+          "**/*"
+        ]
+      },
       {
         "from": "backend-sqlite/src/database",
         "to": "resources/app/backend-sqlite/src/database"
@@ -43,6 +48,10 @@
       {
         "from": "backend-sqlite/package.json",
         "to": "resources/app/backend-sqlite/package.json"
+      },
+      {
+        "from": "src/package.json",
+        "to": "resources/app/package.json"
       }
     ],
     "beforeBuild": null,

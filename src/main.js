@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { spawn, execSync } = require('child_process');
 
 let mainWindow;
@@ -30,11 +31,25 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      webSecurity: false  // Necessário para carregar recursos locais
     },
     show: true,
     alwaysOnTop: true,
     skipTaskbar: false
+  });
+
+  // Habilitar DevTools em produção para debug
+  mainWindow.webContents.openDevTools();
+
+  // Log de erros do webContents
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Erro ao carregar página:', errorCode, errorDescription);
+  });
+
+  // Log de console do renderer
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log('Console do renderer:', message);
   });
 
   // Remove always on top after a moment
@@ -138,7 +153,6 @@ function startBackend(environment) {
     mainWindow.webContents.send('status-update', `Verificando backend en: ${backendPath}`);
 
     // Check if backend path exists
-    const fs = require('fs');
     if (!fs.existsSync(backendPath)) {
       const error = `Carpeta backend no encontrada: ${backendPath}`;
       return resolve({ success: false, error });
@@ -277,105 +291,147 @@ function startBackend(environment) {
 
 function startFrontend() {
   return new Promise(async (resolve, reject) => {
-    // Get the correct path based on whether we're packaged or not
-    let projectPath;
-    if (isDev) {
-      projectPath = path.join(__dirname, '..');
-    } else {
-      // In packaged app without asar, look in app directory
-      projectPath = path.join(process.resourcesPath, 'app');
-    }
-
-    // Send status to UI
-    mainWindow.webContents.send('status-update', `Verificando frontend en: ${projectPath}`);
-
-    // Check if project path exists
-    const fs = require('fs');
-    if (!fs.existsSync(projectPath)) {
-      const error = `Carpeta del proyecto no encontrada: ${projectPath}`;
-      return resolve({ success: false, error });
-    }
-
-    // Check if angular.json exists
-    const angularConfigPath = path.join(projectPath, 'angular.json');
-    if (!fs.existsSync(angularConfigPath)) {
-      const error = `Configuración Angular no encontrada: ${angularConfigPath}`;
-      return resolve({ success: false, error });
-    }
-
-    mainWindow.webContents.send('status-update', 'Archivos frontend encontrados. Verificando dependências...');
-
-    // Ensure frontend dependencies are installed
     try {
-      await ensureFrontendDependencies(projectPath);
-    } catch (error) {
-      return resolve({ success: false, error: `Error instalando dependências do frontend: ${error.message}` });
-    }
-
-    mainWindow.webContents.send('status-update', 'Iniciando servidor Angular...');
-
-    // Use different command based on platform
-    const isWindows = process.platform === 'win32';
-    const command = isWindows ? 'npx.cmd' : 'npx';
-
-    frontendProcess = spawn(command, ['ng', 'serve', '--host', '0.0.0.0', '--port', '4200'], {
-      cwd: projectPath,
-      stdio: 'pipe',
-      shell: true
-    });
-
-    let hasResolved = false;
-    let startupTimeout;
-
-    frontendProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-
-      // Check if server is ready
-      if ((output.includes('Local:') || output.includes('webpack compiled') || output.includes('compiled successfully')) && !hasResolved) {
-        hasResolved = true;
-        clearTimeout(startupTimeout);
-        mainWindow.webContents.send('status-update', 'Servidor frontend iniciado correctamente');
-        resolve({ success: true });
+      // Get the correct path based on whether we're packaged or not
+      let projectPath;
+      if (isDev) {
+        projectPath = path.join(__dirname, '..');
+      } else {
+        // In packaged app without asar, look in app directory
+        projectPath = path.join(process.resourcesPath, 'app', 'frontend', 'browser');
       }
-    });
 
-    frontendProcess.stderr.on('data', (data) => {
-      const error = data.toString();
+      console.log('=== FRONTEND DEBUG INFO ===');
+      console.log('Project Path:', projectPath);
+      console.log('isDev:', isDev);
+      console.log('process.resourcesPath:', process.resourcesPath);
+      console.log('========================');
 
-      // Some Angular warnings are normal, only fail on critical errors
-      if (error.includes('ENOENT') || error.includes('spawn') || error.includes('command not found')) {
+      // Send status to UI
+      mainWindow.webContents.send('status-update', `Verificando frontend en: ${projectPath}`);
+
+      // In production, we don't need to start a server, just load the files directly
+      if (!isDev) {
+        // Check if index.html exists in the project path
+        const indexPath = path.join(projectPath, 'index.html');
+        console.log('Verificando index.html em:', indexPath);
+
+        if (!fs.existsSync(indexPath)) {
+          console.error(`Index.html não encontrado em: ${indexPath}`);
+          console.log('Conteúdo do diretório:', fs.readdirSync(projectPath));
+          return resolve({ success: false, error: `Arquivo index.html não encontrado em: ${indexPath}` });
+        }
+
+        console.log('Index.html encontrado com sucesso');
+        console.log('Carregando aplicação de:', `file://${indexPath}`);
+
+        // Load the index.html directly from the filesystem
+        mainWindow.loadFile(indexPath)
+          .then(() => {
+            console.log('Aplicação carregada com sucesso');
+            // Não fechar o DevTools aqui para poder ver os logs
+            mainWindow.webContents.send('status-update', 'Aplicação iniciada correctamente');
+            resolve({ success: true });
+          })
+          .catch(err => {
+            console.error('Erro ao carregar aplicação:', err);
+            resolve({ success: false, error: `Erro ao carregar aplicação: ${err.message}` });
+          });
+
+        return;
+      }
+
+      // Development mode continues with ng serve
+      // Check if project path exists
+      if (!fs.existsSync(projectPath)) {
+        const error = `Carpeta del proyecto no encontrada: ${projectPath}`;
+        return resolve({ success: false, error });
+      }
+
+      // Check if angular.json exists
+      const angularConfigPath = path.join(projectPath, 'angular.json');
+      if (!fs.existsSync(angularConfigPath)) {
+        const error = `Configuración Angular no encontrada: ${angularConfigPath}`;
+        return resolve({ success: false, error });
+      }
+
+      mainWindow.webContents.send('status-update', 'Archivos frontend encontrados. Verificando dependências...');
+
+      // Ensure frontend dependencies are installed
+      try {
+        await ensureFrontendDependencies(projectPath);
+      } catch (error) {
+        return resolve({ success: false, error: `Error instalando dependências do frontend: ${error.message}` });
+      }
+
+      mainWindow.webContents.send('status-update', 'Iniciando servidor Angular...');
+
+      // Use different command based on platform
+      const isWindows = process.platform === 'win32';
+      const command = isWindows ? 'npx.cmd' : 'npx';
+
+      frontendProcess = spawn(command, ['ng', 'serve', '--host', '0.0.0.0', '--port', '4200'], {
+        cwd: projectPath,
+        stdio: 'pipe',
+        shell: true
+      });
+
+      let hasResolved = false;
+      let startupTimeout;
+
+      frontendProcess.stdout.on('data', (data) => {
+        const output = data.toString();
+
+        // Check if server is ready
+        if ((output.includes('Local:') || output.includes('webpack compiled') || output.includes('compiled successfully')) && !hasResolved) {
+          hasResolved = true;
+          clearTimeout(startupTimeout);
+          mainWindow.webContents.send('status-update', 'Servidor frontend iniciado correctamente');
+          resolve({ success: true });
+        }
+      });
+
+      frontendProcess.stderr.on('data', (data) => {
+        const error = data.toString();
+
+        // Some Angular warnings are normal, only fail on critical errors
+        if (error.includes('ENOENT') || error.includes('spawn') || error.includes('command not found')) {
+          if (!hasResolved) {
+            hasResolved = true;
+            clearTimeout(startupTimeout);
+            resolve({ success: false, error: `Error al ejecutar Angular: ${error}` });
+          }
+        }
+      });
+
+      frontendProcess.on('error', (error) => {
         if (!hasResolved) {
           hasResolved = true;
           clearTimeout(startupTimeout);
-          resolve({ success: false, error: `Error al ejecutar Angular: ${error}` });
+          resolve({ success: false, error: `Error del proceso frontend: ${error.message}` });
         }
-      }
-    });
+      });
 
-    frontendProcess.on('error', (error) => {
-      if (!hasResolved) {
-        hasResolved = true;
-        clearTimeout(startupTimeout);
-        resolve({ success: false, error: `Error del proceso frontend: ${error.message}` });
-      }
-    });
+      frontendProcess.on('exit', (code, signal) => {
+        if (!hasResolved) {
+          hasResolved = true;
+          clearTimeout(startupTimeout);
+          resolve({ success: false, error: `Frontend se cerró inesperadamente (código ${code})` });
+        }
+      });
 
-    frontendProcess.on('exit', (code, signal) => {
-      if (!hasResolved) {
-        hasResolved = true;
-        clearTimeout(startupTimeout);
-        resolve({ success: false, error: `Frontend se cerró inesperadamente (código ${code})` });
-      }
-    });
-
-    // Set timeout to prevent hanging
-    startupTimeout = setTimeout(() => {
-      if (!hasResolved) {
-        hasResolved = true;
-        mainWindow.webContents.send('status-update', 'Timeout del frontend - continuando...');
-        resolve({ success: true });
-      }
-    }, 30000); // 30 seconds timeout for frontend (Angular takes longer)
+      // Set timeout to prevent hanging
+      startupTimeout = setTimeout(() => {
+        if (!hasResolved) {
+          hasResolved = true;
+          mainWindow.webContents.send('status-update', 'Timeout del frontend - continuando...');
+          resolve({ success: true });
+        }
+      }, 30000); // 30 seconds timeout for frontend (Angular takes longer)
+    } catch (error) {
+      console.error('Erro inesperado ao iniciar frontend:', error);
+      resolve({ success: false, error: `Erro inesperado: ${error.message}` });
+    }
   });
 }
 
