@@ -3,6 +3,10 @@ const path = require('path');
 const fs = require('fs');
 const { spawn, execSync } = require('child_process');
 
+// Configuração do ícone do aplicativo
+const iconPath = path.join(__dirname, 'assets', 'icone.ico');
+app.setPath('userData', path.join(app.getPath('userData'), 'Dietetica'));
+
 let mainWindow;
 let backendProcess;
 let frontendProcess;
@@ -28,6 +32,8 @@ function createWindow() {
     height: 800,
     x: 100,
     y: 100,
+    icon: iconPath,
+    title: "Dietetíca",
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

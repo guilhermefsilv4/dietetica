@@ -73,7 +73,7 @@
           ]
         }
       ],
-      "icon": null,
+      "icon": "src/assets/icone.ico",
       "forceCodeSigning": false,
       "signAndEditExecutable": false,
       "verifyUpdateCodeSignature": false
@@ -86,12 +86,13 @@
       "shortcutName": "Dietetíca",
       "uninstallDisplayName": "Dietetíca - Sistema Dietético",
       "license": null,
-      "installerIcon": null,
-      "uninstallerIcon": null,
-      "installerHeaderIcon": null,
+      "installerIcon": "src/assets/icone.ico",
+      "uninstallerIcon": "src/assets/icone.ico",
+      "installerHeaderIcon": "src/assets/icone.ico",
       "deleteAppDataOnUninstall": true,
       "runAfterFinish": true,
-      "differentialPackage": false
+      "differentialPackage": false,
+      "perMachine": true
     },
     "mac": {
       "target": [
@@ -103,10 +104,11 @@
           ]
         }
       ],
-      "icon": null
+      "icon": "src/assets/icone.ico"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "src/assets/icone.ico"
     }
   },
   "dependencies": {
@@ -142,6 +144,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.4.33",
+    "sharp": "^0.34.2",
     "tailwindcss": "^3.4.0",
     "typescript": "~5.8.2"
   }
