@@ -80,7 +80,7 @@ export class ProductsComponent {
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
         p.brand.toLowerCase().includes(term) ||
-        p.barcode?.toLowerCase() === term // Busca exata por código de barras
+        p.barcode?.toLowerCase().includes(term) // Busca parcial por código de barras
       );
     }
 
