@@ -1,13 +1,89 @@
 <div class="container mx-auto px-4 py-8">
-  <!-- Header com botão de adicionar -->
+  <!-- Header com botões de ação -->
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-2xl font-bold text-gray-900">Productos</h1>
-    <button
-      (click)="openProductModal()"
-      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-    >
-      Agregar Producto
-    </button>
+    <div class="flex gap-3">
+      <!-- Dropdown de Exportação -->
+      <div class="relative" #exportDropdown>
+        <button
+          (click)="toggleExportDropdown()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <fa-icon [icon]="faDownload"></fa-icon>
+          Exportar
+          <fa-icon [icon]="faChevronDown" class="text-xs"></fa-icon>
+        </button>
+
+        @if (showExportDropdown()) {
+          <div class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-10">
+            <div class="py-2">
+              <div class="px-4 py-2 text-sm text-gray-500 font-medium border-b">
+                Exportar Todos los Productos
+              </div>
+              <button
+                (click)="exportAllToCSV()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <fa-icon [icon]="faFileCsv" class="text-green-600"></fa-icon>
+                Descargar CSV
+              </button>
+              <button
+                (click)="exportAllToExcel()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <fa-icon [icon]="faFileExcel" class="text-green-600"></fa-icon>
+                Descargar Excel
+              </button>
+
+              <div class="px-4 py-2 text-sm text-gray-500 font-medium border-b border-t mt-2">
+                Exportar Productos Filtrados
+              </div>
+              <button
+                (click)="exportFilteredToCSV()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                [disabled]="filteredProducts().length === 0"
+              >
+                <fa-icon [icon]="faFileCsv" class="text-blue-600"></fa-icon>
+                CSV Filtrados ({{ filteredProducts().length }})
+              </button>
+              <button
+                (click)="exportFilteredToExcel()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                [disabled]="filteredProducts().length === 0"
+              >
+                <fa-icon [icon]="faFileExcel" class="text-blue-600"></fa-icon>
+                Excel Filtrados ({{ filteredProducts().length }})
+              </button>
+
+              <div class="px-4 py-2 text-sm text-gray-500 font-medium border-b border-t mt-2">
+                Templates
+              </div>
+              <button
+                (click)="exportTemplate('csv')"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <fa-icon [icon]="faFileCsv" class="text-orange-600"></fa-icon>
+                Template CSV
+              </button>
+              <button
+                (click)="exportTemplate('excel')"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <fa-icon [icon]="faFileExcel" class="text-orange-600"></fa-icon>
+                Template Excel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button
+        (click)="openProductModal()"
+        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+      >
+        Agregar Producto
+      </button>
+    </div>
   </div>
 
   <!-- Filtros -->

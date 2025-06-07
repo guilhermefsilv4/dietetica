@@ -82,7 +82,7 @@ export class ProductService {
     return this.productsDb().find(product => product.id === id);
   }
 
-  async addProductDb(product: Omit<Product, 'id'>) {
+    async addProductDb(product: Omit<Product, 'id'>) {
     try {
       const newProduct = await this.http.post<Product>('products', product);
       this.productsDb.update(products => [...products, newProduct]);
@@ -121,6 +121,16 @@ export class ProductService {
       this.productsDb.update(products => products.filter(p => p.id !== id));
     } catch (error) {
       console.error('Erro ao deletar produto no banco:', error);
+      throw error;
+    }
+  }
+
+  async deleteAllProductsDb() {
+    try {
+      await this.http.delete('products/all');
+      this.productsDb.set([]);
+    } catch (error) {
+      console.error('Erro ao deletar todos os produtos do banco:', error);
       throw error;
     }
   }

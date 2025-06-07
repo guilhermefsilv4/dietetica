@@ -67,7 +67,7 @@ export class HttpService {
     }
   }
 
-  async post<T>(endpoint: string, data: any): Promise<T> {
+    async post<T>(endpoint: string, data: any): Promise<T> {
     try {
       const transformedData = this.transformRequest(data);
       const response = await firstValueFrom(this.http.post<any>(`${this.apiUrl}/${endpoint}`, transformedData));

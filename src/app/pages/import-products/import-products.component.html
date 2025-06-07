@@ -13,7 +13,7 @@
         <h3 class="text-sm font-medium text-blue-800">Formato del archivo CSV</h3>
         <div class="mt-2 text-sm text-blue-700">
           <p>El archivo debe contener las siguientes columnas en este orden:</p>
-          <p class="font-mono text-xs mt-1">CODIGO,NOMBRE,RUBRO,MARCA,PROVEEDOR,STOCK MINIMO,COSTO,PRECIO,PRECIO X MAYOR,MARKUP %</p>
+          <p class="font-mono text-xs mt-1">CODIGO,NOMBRE,RUBRO,PROVEEDOR,STOCK MINIMO,COSTO,PRECIO,PRECIO X MAYOR,MARKUP %</p>
           <p class="mt-2">Los productos sin URL de imagen usarán automáticamente la imagen por defecto.</p>
         </div>
       </div>
@@ -176,7 +176,7 @@
 
   <!-- Progress Bar -->
   @if (isProcessing()) {
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8 mt-4">
       <h3 class="text-lg font-medium text-gray-900 mb-4">Importando productos...</h3>
       <div class="w-full bg-gray-200 rounded-full h-2.5">
         <div

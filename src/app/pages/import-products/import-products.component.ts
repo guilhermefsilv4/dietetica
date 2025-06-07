@@ -17,7 +17,6 @@ interface CsvProduct {
   codigo: string;
   nombre: string;
   rubro: string;
-  marca: string;
   proveedor: string;
   stockMinimo: number;
   costo: number;
@@ -93,7 +92,7 @@ export class ImportProductsComponent {
     const headers = lines[0].split(',').map(h => h.trim());
 
     // Verificar se os headers estão corretos
-    const expectedHeaders = ['CODIGO', 'NOMBRE', 'RUBRO', 'MARCA', 'PROVEEDOR', 'STOCK MINIMO', 'COSTO', 'PRECIO', 'PRECIO X MAYOR', 'MARKUP %'];
+    const expectedHeaders = ['CODIGO', 'NOMBRE', 'RUBRO', 'PROVEEDOR', 'STOCK MINIMO', 'COSTO', 'PRECIO', 'PRECIO X MAYOR', 'MARKUP %'];
 
     if (!this.validateHeaders(headers, expectedHeaders)) {
       alert('El formato del CSV no es correcto. Asegúrate de que tenga los headers correctos.');
@@ -105,18 +104,17 @@ export class ImportProductsComponent {
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
 
-      if (values.length >= 10) {
+      if (values.length >= 9) {
         csvProducts.push({
           codigo: values[0],
           nombre: values[1],
           rubro: values[2],
-          marca: values[3],
-          proveedor: values[4],
-          stockMinimo: parseInt(values[5]) || 0,
-          costo: parseFloat(values[6]) || 0,
-          precio: parseFloat(values[7]) || 0,
-          precioMayor: parseFloat(values[8]) || 0,
-          markup: parseFloat(values[9]) || 0
+          proveedor: values[3],
+          stockMinimo: parseInt(values[4]) || 0,
+          costo: parseFloat(values[5]) || 0,
+          precio: parseFloat(values[6]) || 0,
+          precioMayor: parseFloat(values[7]) || 0,
+          markup: parseFloat(values[8]) || 0
         });
       }
     }
@@ -146,7 +144,7 @@ export class ImportProductsComponent {
       const price = csvProduct.precio > 0 ? csvProduct.precio : 0;
 
       // Criar descrição com os dados disponíveis
-      const descParts = [csvProduct.marca, csvProduct.rubro].filter(Boolean);
+      const descParts = [csvProduct.proveedor, csvProduct.rubro].filter(Boolean);
       const description = descParts.length > 0 ? descParts.join(' - ') : 'Sin descripción';
 
       let barcode: string;
@@ -164,15 +162,15 @@ export class ImportProductsComponent {
         isDuplicateInCsv = processed.some(p => p.barcode === barcode);
       } else {
         // Produto não tem código de barras - verificar se já existe um similar com código TEMP
-        const brand = csvProduct.marca || 'Sin marca';
+        const brand = csvProduct.proveedor || 'Sin proveedor';
         const category = csvProduct.rubro || 'Sin categoría';
 
         // Procurar produto similar que já tenha código TEMP
         const existingTempProduct = existingProducts.find(p =>
-          p.barcode.startsWith('TEMP_') &&
-          p.name === name &&
-          p.brand === brand &&
-          p.category === category
+          p.barcode.startsWith('TEMP_') //&&
+          // p.name === name &&
+          // p.brand === brand &&
+          // p.category === category
         );
 
         if (existingTempProduct) {
@@ -184,11 +182,11 @@ export class ImportProductsComponent {
           barcode = `TEMP_${Date.now()}_${index}`;
 
           // Verificar duplicata no CSV atual
-          isDuplicateInCsv = processed.some(p =>
-            p.name === name &&
-            p.brand === brand &&
-            p.category === category
-          );
+          // isDuplicateInCsv = processed.some(p =>
+          //   p.name === name &&
+          //   p.brand === brand &&
+          //   p.category === category
+          // );
         }
       }
 
@@ -196,9 +194,9 @@ export class ImportProductsComponent {
         errors.push('Ya existe en la base de datos');
       }
 
-      if (isDuplicateInCsv) {
-        errors.push('Duplicado en el archivo CSV');
-      }
+      // if (isDuplicateInCsv) {
+      //   errors.push('Duplicado en el archivo CSV');
+      // }
 
       const product: ProcessedProduct = {
         id: '', // Será gerado pelo banco
@@ -210,7 +208,7 @@ export class ImportProductsComponent {
         stock: 0, // Stock inicial 0, pode ser ajustado depois
         minStock: csvProduct.stockMinimo || 0,
         saleType: 'unit', // Default para unit, pode ser ajustado
-        brand: csvProduct.marca || 'Sin marca',
+        brand: csvProduct.proveedor || 'Sin proveedor',
         imageUrl: 'assets/sinimagen.jpg', // Imagem padrão conforme solicitado
         hasVariants: false,
         isValid: errors.length === 0, // Válido apenas se não há erros
@@ -249,6 +247,8 @@ export class ImportProductsComponent {
 
         // Remove propriedades específicas do processamento
         const { isValid, errors: validationErrors, originalRow, ...productData } = product;
+
+
 
         await this.productService.addProductDb(productData);
         success++;
