@@ -1,38 +1,131 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Filtros -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-      <div class="flex flex-wrap gap-4">
-        <div class="flex-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Buscar por nombre o código de barras
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+      <div class="flex items-center mb-4">
+        <div class="p-2 bg-green-50 rounded-lg mr-3">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Filtros de Búsqueda - Stock</h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-3">
+            <span class="flex items-center">
+              <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              Buscar por nombre o código de barras
+            </span>
           </label>
           <div class="relative">
             <input
               type="text"
               [(ngModel)]="searchTerm"
-              placeholder="Nombre del producto o código de barras..."
-              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Escribí el nombre del producto o código de barras..."
+              class="w-full px-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
             />
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <fa-icon [icon]="faSearch" class="text-gray-400"></fa-icon>
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            @if (searchTerm()) {
+              <button
+                (click)="searchTerm.set('')"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3">
+            <span class="flex items-center">
+              <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+              Rubro
+            </span>
+          </label>
+          <div class="relative">
+            <select
+              [(ngModel)]="selectedCategory"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white appearance-none pr-10"
+            >
+              <option value="">Todos los rubros</option>
+              @for (category of categories(); track category) {
+                <option [value]="category">{{ category }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+          @if (selectedCategory()) {
+            <div class="mt-2 flex items-center text-sm text-green-600">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              Filtrando por: {{ selectedCategory() }}
+              <button
+                (click)="selectedCategory.set('')"
+                class="ml-2 text-gray-400 hover:text-red-500"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Resumo dos filtros -->
+      @if (searchTerm() || selectedCategory()) {
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center text-sm text-gray-600">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              Mostrando {{ filteredProducts().length }} de {{ totalItems() }} productos en stock
+            </div>
+            <div class="flex gap-2">
+              @if (searchTerm()) {
+                <button
+                  (click)="searchTerm.set('')"
+                  class="text-sm text-green-600 hover:text-green-800 font-medium flex items-center"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  Limpiar búsqueda
+                </button>
+              }
+              @if (selectedCategory()) {
+                <button
+                  (click)="selectedCategory.set('')"
+                  class="text-sm text-green-600 hover:text-green-800 font-medium flex items-center"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  Limpiar rubro
+                </button>
+              }
             </div>
           </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Categoría
-          </label>
-          <select
-            [(ngModel)]="selectedCategory"
-            class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las categorías</option>
-            @for (category of categories(); track category) {
-              <option [value]="category">{{ category }}</option>
-            }
-          </select>
-        </div>
-      </div>
+      }
     </div>
 
     <!-- Tabela de produtos -->

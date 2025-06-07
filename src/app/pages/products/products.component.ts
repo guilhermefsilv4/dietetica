@@ -34,6 +34,45 @@ import { FieldErrorComponent } from '../../components/field-error/field-error.co
     .copied {
       @apply text-green-500 bg-green-50;
     }
+
+    .animate-modal-enter {
+      animation: modalEnter 0.3s ease-out;
+    }
+
+    @keyframes modalEnter {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Hover effects for form inputs */
+    input:focus, textarea:focus, select:focus {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Custom scrollbar for modal content */
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
   `]
 })
 export class ProductsComponent {
