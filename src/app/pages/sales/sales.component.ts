@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
 import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSearch,
+  faPlus,
+  faTrash,
+  faShoppingCart,
+  faBoxesStacked
+} from '@fortawesome/free-solid-svg-icons';
 import { SaleService } from '@services/sale.service';
 import { TicketService } from '@services/ticket.service';
 import { Sale, SaleItem } from '@interfaces/sale.interface';
@@ -28,8 +34,12 @@ import { debounceTime, Subject } from 'rxjs';
   styles: []
 })
 export class SalesComponent {
-  // Ícones
-  faTrash = faTrash;
+  // Icons
+  protected faSearch = faSearch;
+  protected faPlus = faPlus;
+  protected faTrash = faTrash;
+  protected faShoppingCart = faShoppingCart;
+  protected faBoxesStacked = faBoxesStacked;
 
   // Referência ao Math para usar no template
   protected Math = Math;
