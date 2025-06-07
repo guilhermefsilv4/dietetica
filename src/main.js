@@ -127,8 +127,8 @@ ipcMain.handle('start-servers', async (event, dbEnvironment) => {
     // Wait for frontend to be ready
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Navigate to the application
-    mainWindow.loadURL('http://localhost:4200');
+    // Em produção, não precisamos fazer nada aqui pois o frontend já foi carregado
+    // Em desenvolvimento, o frontend já foi carregado pelo startFrontend()
 
     return { success: true };
   } catch (error) {
@@ -329,7 +329,6 @@ function startFrontend() {
         mainWindow.loadFile(indexPath)
           .then(() => {
             console.log('Aplicação carregada com sucesso');
-            // Não fechar o DevTools aqui para poder ver os logs
             mainWindow.webContents.send('status-update', 'Aplicação iniciada correctamente');
             resolve({ success: true });
           })
@@ -341,30 +340,9 @@ function startFrontend() {
         return;
       }
 
-      // Development mode continues with ng serve
-      // Check if project path exists
-      if (!fs.existsSync(projectPath)) {
-        const error = `Carpeta del proyecto no encontrada: ${projectPath}`;
-        return resolve({ success: false, error });
-      }
-
-      // Check if angular.json exists
-      const angularConfigPath = path.join(projectPath, 'angular.json');
-      if (!fs.existsSync(angularConfigPath)) {
-        const error = `Configuración Angular no encontrada: ${angularConfigPath}`;
-        return resolve({ success: false, error });
-      }
-
-      mainWindow.webContents.send('status-update', 'Archivos frontend encontrados. Verificando dependências...');
-
-      // Ensure frontend dependencies are installed
-      try {
-        await ensureFrontendDependencies(projectPath);
-      } catch (error) {
-        return resolve({ success: false, error: `Error instalando dependências do frontend: ${error.message}` });
-      }
-
-      mainWindow.webContents.send('status-update', 'Iniciando servidor Angular...');
+      // Development mode - start ng serve
+      console.log('Iniciando servidor de desenvolvimento...');
+      mainWindow.webContents.send('status-update', 'Iniciando servidor de desenvolvimento...');
 
       // Use different command based on platform
       const isWindows = process.platform === 'win32';
@@ -381,13 +359,24 @@ function startFrontend() {
 
       frontendProcess.stdout.on('data', (data) => {
         const output = data.toString();
+        console.log('Frontend:', output);
 
         // Check if server is ready
         if ((output.includes('Local:') || output.includes('webpack compiled') || output.includes('compiled successfully')) && !hasResolved) {
           hasResolved = true;
           clearTimeout(startupTimeout);
-          mainWindow.webContents.send('status-update', 'Servidor frontend iniciado correctamente');
-          resolve({ success: true });
+          console.log('Servidor de desenvolvimento pronto');
+          mainWindow.webContents.send('status-update', 'Servidor de desenvolvimento pronto');
+
+          // Em desenvolvimento, carregamos via localhost
+          mainWindow.loadURL('http://localhost:4200')
+            .then(() => {
+              resolve({ success: true });
+            })
+            .catch(err => {
+              console.error('Erro ao carregar aplicação em desenvolvimento:', err);
+              resolve({ success: false, error: err.message });
+            });
         }
       });
 
@@ -680,29 +669,29 @@ async function ensureFrontendDependencies(projectPath) {
       try {
         execSync(`${cmd} --version`, { stdio: 'ignore' });
         npmCommand = cmd;
-        console.log(`Found working npm command for frontend: ${npmCommand}`);
+        console.log(`Found working npm command: ${npmCommand}`);
         break;
       } catch (e) {
-        console.log(`Command ${cmd} not found for frontend`);
+        console.log(`Command ${cmd} not found`);
         continue;
       }
     }
 
     if (!npmCommand) {
-      const error = 'npm não encontrado no sistema para frontend. Instale Node.js';
+      const error = 'npm não encontrado no sistema. Instale Node.js';
       console.error(error);
       reject(new Error(error));
       return;
     }
 
-    console.log(`Executando npm install no frontend: ${npmCommand} install`);
-    mainWindow.webContents.send('status-update', `Executando: ${npmCommand} install (frontend)`);
+    console.log(`Executando: ${npmCommand} install --production`);
+    mainWindow.webContents.send('status-update', `Executando: ${npmCommand} install`);
 
-    const installProcess = spawn(npmCommand, ['install'], {
+    const installProcess = spawn(npmCommand, ['install', '--production'], {
       cwd: projectPath,
       stdio: 'pipe',
       shell: true,
-      env: { ...process.env }
+      env: { ...process.env, NODE_ENV: 'production' }
     });
 
     let outputData = '';
@@ -711,23 +700,23 @@ async function ensureFrontendDependencies(projectPath) {
     installProcess.stdout.on('data', (data) => {
       const output = data.toString();
       outputData += output;
-      console.log('frontend npm stdout:', output.trim());
-      mainWindow.webContents.send('status-update', `frontend npm: ${output.trim()}`);
+      console.log('npm stdout:', output.trim());
+      mainWindow.webContents.send('status-update', `npm: ${output.trim()}`);
     });
 
     installProcess.stderr.on('data', (data) => {
       const error = data.toString();
       errorOutput += error;
-      console.log('frontend npm stderr:', error.trim());
+      console.log('npm stderr:', error.trim());
 
       // Only worry about serious errors, not warnings
       if (!error.includes('WARN') && !error.includes('deprecated')) {
-        mainWindow.webContents.send('status-update', `frontend npm error: ${error.trim()}`);
+        mainWindow.webContents.send('status-update', `npm error: ${error.trim()}`);
       }
     });
 
     installProcess.on('exit', (code) => {
-      console.log(`frontend npm install exit code: ${code}`);
+      console.log(`npm install exit code: ${code}`);
 
       if (code === 0) {
         // Verify installation worked
@@ -740,35 +729,39 @@ async function ensureFrontendDependencies(projectPath) {
         }
 
         if (stillMissing.length === 0) {
-          console.log('✅ Todas as dependências do frontend instaladas com sucesso');
-          mainWindow.webContents.send('status-update', 'Dependências do frontend instaladas com sucesso');
+          console.log('✅ Todas as dependências instaladas com sucesso');
+          mainWindow.webContents.send('status-update', 'Dependências instaladas com sucesso');
           resolve();
         } else {
-          console.log('⚠️ Algumas dependências do frontend ainda faltando, mas continuando...');
-          mainWindow.webContents.send('status-update', 'Dependências básicas do frontend OK');
-          resolve(); // Continue anyway, may work with available deps
+          const error = `Falha na instalação das dependências: ${stillMissing.join(', ')}`;
+          console.error(error);
+          console.error('npm output:', outputData);
+          console.error('npm errors:', errorOutput);
+          reject(new Error(error));
         }
       } else {
-        const error = `frontend npm install falhou com código ${code}`;
+        const error = `npm install falhou com código ${code}`;
         console.error(error);
-        console.error('frontend npm output:', outputData);
-        console.error('frontend npm errors:', errorOutput);
+        console.error('npm output:', outputData);
+        console.error('npm errors:', errorOutput);
         reject(new Error(`${error}\nOutput: ${errorOutput}`));
       }
     });
 
     installProcess.on('error', (error) => {
-      console.error('frontend npm process error:', error);
-      reject(new Error(`Erro ao executar npm no frontend: ${error.message}`));
+      console.error('npm process error:', error);
+      reject(new Error(`Erro ao executar npm: ${error.message}`));
     });
 
-    // Set timeout (3 minutes for frontend - Angular has more dependencies)
+    // Set timeout (2 minutes)
     setTimeout(() => {
       if (installProcess && !installProcess.killed) {
-        console.log('frontend npm install timeout - killing process');
+        console.log('npm install timeout - killing process');
         installProcess.kill();
-        reject(new Error('Timeout na instalação das dependências do frontend (3 minutos)'));
+        reject(new Error('Timeout na instalação das dependências (2 minutos)'));
       }
-    }, 180000);
-  });
+         }, 120000);
+   });
 }
+
+// ... rest of the file remains unchanged ...
