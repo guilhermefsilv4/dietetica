@@ -11,6 +11,9 @@
 npm-debug.log
 yarn-error.log
 
+# Allow backend node_modules to be versioned if needed
+!/backend-sqlite/node_modules
+
 # IDEs and editors
 .idea/
 .project
@@ -40,3 +43,11 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Database files
+# Uncomment the line below if you want to ignore database files
+#*.db
+
+# Ensure installation scripts are versioned
+!*.bat
+!*.ps1

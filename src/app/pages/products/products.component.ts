@@ -1,10 +1,21 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '@services/product.service';
+import { ExportService } from '@services/export.service';
 import { Product } from '@interfaces/product.interface';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash, faSearch, faClipboard, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+  faEdit,
+  faTrash,
+  faSearch,
+  faClipboard,
+  faClipboardCheck,
+  faDownload,
+  faChevronDown,
+  faFileCsv,
+  faFileExcel
+} from '@fortawesome/free-solid-svg-icons';
 import { TooltipComponent } from '@components/tooltip/tooltip.component';
 import { ConfirmationModalComponent } from '@components/shared/confirmation-modal/confirmation-modal.component';
 import { PaginationComponent } from '@components/shared/pagination/pagination.component';
@@ -31,6 +42,10 @@ export class ProductsComponent {
   protected faSearch = faSearch;
   protected faClipboard = faClipboard;
   protected faClipboardCheck = faClipboardCheck;
+  protected faDownload = faDownload;
+  protected faChevronDown = faChevronDown;
+  protected faFileCsv = faFileCsv;
+  protected faFileExcel = faFileExcel;
 
   // Estado do componente
   searchTerm = signal('');
@@ -49,6 +64,9 @@ export class ProductsComponent {
   // Estado de cópia
   private copiedBarcode = signal<string | null>(null);
 
+  // Estado do dropdown de exportação
+  showExportDropdown = signal(false);
+
   productForm: Partial<Product> = {
     name: '',
     brand: '',
@@ -62,7 +80,10 @@ export class ProductsComponent {
     imageUrl: ''
   };
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private exportService: ExportService
+  ) {}
 
   // Computed properties
   categories = computed(() => {
@@ -80,7 +101,7 @@ export class ProductsComponent {
         p.name.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term) ||
         p.brand.toLowerCase().includes(term) ||
-        p.barcode?.toLowerCase() === term // Busca exata por código de barras
+        p.barcode?.toLowerCase().includes(term) // Busca parcial por código de barras
       );
     }
 
@@ -262,5 +283,52 @@ export class ProductsComponent {
 
   isCopied(barcode: string): boolean {
     return this.copiedBarcode() === barcode;
+  }
+
+  // Listener para fechar dropdown ao clicar fora
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      this.showExportDropdown.set(false);
+    }
+  }
+
+  // Métodos de exportação
+  toggleExportDropdown() {
+    this.showExportDropdown.update(show => !show);
+  }
+
+  exportAllToCSV() {
+    const allProducts = this.productService.getProductsDb()();
+    this.exportService.exportToCSV(allProducts, 'todos_los_productos');
+    this.showExportDropdown.set(false);
+  }
+
+  exportAllToExcel() {
+    const allProducts = this.productService.getProductsDb()();
+    this.exportService.exportToExcel(allProducts, 'todos_los_productos');
+    this.showExportDropdown.set(false);
+  }
+
+  exportFilteredToCSV() {
+    const filtered = this.filteredProducts();
+    if (filtered.length === 0) return;
+
+    this.exportService.exportFilteredToCSV(filtered, 'productos_filtrados');
+    this.showExportDropdown.set(false);
+  }
+
+  exportFilteredToExcel() {
+    const filtered = this.filteredProducts();
+    if (filtered.length === 0) return;
+
+    this.exportService.exportFilteredToExcel(filtered, 'productos_filtrados');
+    this.showExportDropdown.set(false);
+  }
+
+  exportTemplate(format: 'csv' | 'excel') {
+    this.exportService.exportTemplate(format);
+    this.showExportDropdown.set(false);
   }
 }

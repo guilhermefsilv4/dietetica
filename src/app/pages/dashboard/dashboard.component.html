@@ -63,15 +63,23 @@
 
   <!-- Productos con Stock Bajo -->
   <div class="bg-white rounded-lg shadow p-6 mb-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Productos con Stock Bajo</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold text-gray-800">Productos con Stock Bajo</h2>
+      @if (lowStockCount() > 0) {
+        <span class="text-sm text-gray-600">
+          {{ lowStockCount() }} producto{{ lowStockCount() !== 1 ? 's' : '' }} con stock bajo
+        </span>
+      }
+    </div>
+
     @if (isLoadingState()) {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (i of [1,2,3]; track trackByIndex(i)) {
           <div class="h-48 skeleton rounded-lg"></div>
         }
       </div>
-    } @else {
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    } @else if (lowStockCount() > 0) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         @for (product of lowStockProducts(); track product.id) {
           <app-product-card
             [productData]="product"
@@ -79,6 +87,24 @@
             (onDelete)="deleteProduct($event)"
           />
         }
+      </div>
+
+      <!-- Paginação para produtos com stock baixo -->
+      @if (lowStockTotalPages() > 1) {
+        <app-pagination
+          [currentPage]="lowStockCurrentPage()"
+          [totalPages]="lowStockTotalPages()"
+          [pageSize]="lowStockPageSize()"
+          [totalItems]="lowStockTotalItems()"
+          (previousPage)="onLowStockPreviousPage()"
+          (nextPage)="onLowStockNextPage()"
+        ></app-pagination>
+      }
+    } @else {
+      <div class="text-center py-12">
+        <fa-icon [icon]="faBoxesStacked" class="text-gray-400 text-5xl mb-4"></fa-icon>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay productos con stock bajo</h3>
+        <p class="text-gray-500">Todos los productos tienen stock suficiente.</p>
       </div>
     }
   </div>

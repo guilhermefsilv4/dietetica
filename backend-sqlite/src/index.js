@@ -44,9 +44,9 @@ const mapToApi = (dbProduct) => ({
 
 const mapToDb = (apiProduct) => ({
   ...apiProduct,
-  image_url: apiProduct.imageUrl,
-  sale_type: apiProduct.saleType,
-  min_stock: apiProduct.minStock
+  image_url: apiProduct.imageUrl || apiProduct.image_url,
+  sale_type: apiProduct.saleType || apiProduct.sale_type,
+  min_stock: apiProduct.minStock || apiProduct.min_stock
 });
 
 // Funções auxiliares para movimentações
@@ -155,6 +155,8 @@ app.post('/api/products', (req, res) => {
     image_url
   } = dbProduct;
 
+
+
   db.run(
     `INSERT INTO products (
       barcode, name, brand, category, description,
@@ -248,6 +250,49 @@ app.put('/api/products/:id', (req, res) => {
       });
     }
   );
+});
+
+// Endpoint administrativo para deletar todos os produtos - DEVE ESTAR ANTES DO /:id
+app.delete('/api/products/all', (req, res) => {
+  // Primeiro, deletar dados relacionados em ordem
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // Deletar movimentações de estoque relacionadas
+    db.run('DELETE FROM stock_movements', (err) => {
+      if (err) {
+        db.run('ROLLBACK');
+        res.status(500).json({ error: 'Erro ao deletar movimentações: ' + err.message });
+        return;
+      }
+
+      // Deletar itens de venda relacionados
+      db.run('DELETE FROM sale_items', (err) => {
+        if (err) {
+          db.run('ROLLBACK');
+          res.status(500).json({ error: 'Erro ao deletar itens de venda: ' + err.message });
+          return;
+        }
+
+        // Finalmente, deletar produtos
+        db.run('DELETE FROM products', (err) => {
+          if (err) {
+            db.run('ROLLBACK');
+            res.status(500).json({ error: 'Erro ao deletar produtos: ' + err.message });
+            return;
+          }
+
+          db.run('COMMIT', (err) => {
+            if (err) {
+              res.status(500).json({ error: 'Erro ao confirmar transação: ' + err.message });
+              return;
+            }
+            res.json({ message: 'Todos os produtos e dados relacionados foram deletados com sucesso' });
+          });
+        });
+      });
+    });
+  });
 });
 
 app.delete('/api/products/:id', (req, res) => {

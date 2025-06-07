@@ -1,14 +1,116 @@
 {
   "name": "dietetica",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión Dietética",
+  "author": "Dietetica Team",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "electron": "electron .",
+    "electron-start": "electron .",
+    "electron-build": "electron-builder",
+    "electron-build-win": "electron-builder --win",
+    "electron-build-mac": "electron-builder --mac",
+    "electron-build-all": "electron-builder --win --mac",
+    "electron-dist": "npm run electron-build-all"
   },
+  "main": "src/main.js",
   "private": true,
+  "build": {
+    "appId": "com.dietetica.app",
+    "productName": "Dietetíca",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "backend-sqlite/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "!backend-sqlite/node_modules/.cache/**/*",
+      "!node_modules/.cache/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "dist/dietetica/browser",
+        "to": "resources/app/frontend/browser",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "backend-sqlite/src/database",
+        "to": "resources/app/backend-sqlite/src/database"
+      },
+      {
+        "from": "backend-sqlite/package.json",
+        "to": "resources/app/backend-sqlite/package.json"
+      },
+      {
+        "from": "src/package.json",
+        "to": "resources/app/package.json"
+      }
+    ],
+    "beforeBuild": null,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "asar": false,
+    "win": {
+      "target": [
+        {
+          "target": "7z",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "src/assets/icone.ico",
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Dietetíca",
+      "uninstallDisplayName": "Dietetíca - Sistema Dietético",
+      "license": null,
+      "installerIcon": "src/assets/icone.ico",
+      "uninstallerIcon": "src/assets/icone.ico",
+      "installerHeaderIcon": "src/assets/icone.ico",
+      "deleteAppDataOnUninstall": true,
+      "runAfterFinish": true,
+      "differentialPackage": false,
+      "perMachine": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "src/assets/icone.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "src/assets/icone.ico"
+    }
+  },
   "dependencies": {
     "@angular/common": "^20.0.0",
     "@angular/compiler": "^20.0.0",
@@ -20,18 +122,24 @@
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "chart.js": "^4.4.9",
-    "lmdb": "^3.4.0",
+    "file-saver": "^2.0.5",
     "ng2-charts": "^8.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
     "@angular/build": "^20.0.0",
     "@angular/cli": "^20.0.0",
     "@angular/compiler-cli": "^20.0.0",
+    "@electron/rebuild": "^4.0.1",
+    "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.4.16",
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9",
     "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -39,6 +147,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.4.33",
+    "sharp": "^0.34.2",
     "tailwindcss": "^3.4.0",
     "typescript": "~5.8.2"
   }
