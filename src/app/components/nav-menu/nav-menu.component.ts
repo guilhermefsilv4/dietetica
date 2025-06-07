@@ -12,7 +12,8 @@ import {
   faShoppingCart,
   faUsers,
   faReceipt,
-  faCashRegister
+  faCashRegister,
+  faFileImport
 } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -33,6 +34,7 @@ export class NavMenuComponent {
   protected faUsers = faUsers;
   protected faReceipt = faReceipt;
   protected faCashRegister = faCashRegister;
+  protected faFileImport = faFileImport;
 
   // Estado do menu mobile
   protected mobileMenuOpen = signal(false);
